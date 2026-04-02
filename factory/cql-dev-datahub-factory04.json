@@ -101,6 +101,10 @@
 			"param_piwebapi_path": {
 				"type": "string",
 				"value": "\\\\\\\\CQL-DEV1-PCOL01\\\\"
+			},
+			"param_SharePoint_ReferenceData": {
+				"type": "string",
+				"value": "NP_ReferenceData"
 			}
 		}
 	},
