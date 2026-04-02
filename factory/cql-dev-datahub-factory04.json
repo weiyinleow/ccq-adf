@@ -125,6 +125,10 @@
 			"param_SharePoint_DUID_Connection_Point_Mapping": {
 				"type": "string",
 				"value": "NP_DUID_Connection_Point_Mapping"
+			},
+			"param_SharePoint_DistributionLossFactors": {
+				"type": "string",
+				"value": "NP_AEMO_DistributionLossFactors"
 			}
 		}
 	},
