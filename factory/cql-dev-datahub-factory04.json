@@ -93,6 +93,10 @@
 			"param_synapse_sql_linked_service_name": {
 				"type": "string",
 				"value": "LS_SQL_ELTFrameworkDB"
+			},
+			"param_dl_storage_account": {
+				"type": "string",
+				"value": "cqldevdatahubsynapse"
 			}
 		}
 	},
