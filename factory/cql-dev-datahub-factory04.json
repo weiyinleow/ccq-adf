@@ -65,6 +65,10 @@
 			"param_keyvault_secrets_endpoint": {
 				"type": "string",
 				"value": "https://cql-dev-datahub-key.vault.azure.net/secrets/"
+			},
+			"param_piwebapi_serverurl": {
+				"type": "string",
+				"value": "https://pivis.dev.cleancoqld.com.au/piwebapi/"
 			}
 		}
 	},
