@@ -37,6 +37,10 @@
 			"param_SharePoint_Category": {
 				"type": "string",
 				"value": "NP_SPM_Categor"
+			},
+			"param_SharePoint_RawFixedCost": {
+				"type": "string",
+				"value": "NP_SPM_RawFixedCost"
 			}
 		}
 	},
