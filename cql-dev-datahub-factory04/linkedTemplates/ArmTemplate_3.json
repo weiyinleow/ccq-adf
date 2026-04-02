@@ -1,0 +1,787 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "cql-dev-datahub-factory04"
+		},
+		"LS_SQL_OnPremiseSources_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_OnPremiseSources'",
+			"defaultValue": "Integrated Security=False;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName};User ID=@{linkedService().ls_param_username}"
+		},
+		"LS_SQL_SqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_SqlServer'",
+			"defaultValue": "Integrated Security=False;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName};User ID=@{linkedService().ls_param_username}"
+		},
+		"LS_AFUNC_DatalakeExtractors_properties_typeProperties_functionAppUrl": {
+			"type": "string",
+			"defaultValue": "https://vn-datapltfv2-dev-func-extractors.azurewebsites.net"
+		},
+		"LS_AFUNC_DatalakeFramework_properties_typeProperties_functionAppUrl": {
+			"type": "string",
+			"defaultValue": "https://vn-datapltfv2-dev-func-utility.azurewebsites.net"
+		},
+		"LS_BOM_SFTP_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "sftp-reg.cloud.bom.gov.au"
+		},
+		"LS_BOM_SFTP_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "bom1312"
+		},
+		"LS_REST_PIWebAPI_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_base_url}"
+		},
+		"LS_REST_PIWebAPI_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_adfserviceacct_username}"
+		},
+		"LS_TradingOps_FS_sasUri": {
+			"type": "secureString",
+			"metadata": "Secure string for 'sasUri' of 'LS_TradingOps_FS'"
+		},
+		"LS_TradingOps_FS_properties_typeProperties_sasToken_secretName": {
+			"type": "string",
+			"defaultValue": "cleanco-aemo-msats-archive-sas-token"
+		},
+		"Purview-DataFactory-PE_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/e7a5cadd-075a-4f64-a30b-b83175afd0aa/resourceGroups/CQL-AZUR1-PRODDATAHUB01-RG/providers/Microsoft.Purview/accounts/CQL-PROD-DATAHUB-PURVIEW"
+		},
+		"Purview-DataFactory-PE_properties_groupId": {
+			"type": "string",
+			"defaultValue": "account"
+		},
+		"Purview-DataFactory-PE_blob_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/ef36d528-531d-4e40-9231-12300b0cc406/resourceGroups/ingestion-storage-rg-australiaeast-5/providers/Microsoft.Storage/storageAccounts/ingestionaegdsmova"
+		},
+		"Purview-DataFactory-PE_blob_properties_groupId": {
+			"type": "string",
+			"defaultValue": "blob"
+		},
+		"Purview-DataFactory-PE_queue_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/ef36d528-531d-4e40-9231-12300b0cc406/resourceGroups/ingestion-storage-rg-australiaeast-5/providers/Microsoft.Storage/storageAccounts/ingestionaegdsmova"
+		},
+		"Purview-DataFactory-PE_queue_properties_groupId": {
+			"type": "string",
+			"defaultValue": "queue"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_SharePoint_CSV_TO_PD')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endpoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"TARGET_FOLDER_PATH": {
+						"type": "string"
+					},
+					"TARGET_FILE_NAME": {
+						"type": "string"
+					},
+					"FILE_PATH": {
+						"type": "string"
+					},
+					"ds_param_endpoint": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "2 - Landing"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().TARGET_FILE_NAME",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat(dataset().FILE_PATH, '/', dataset().TARGET_FOLDER_PATH)",
+							"type": "Expression"
+						},
+						"fileSystem": "portfolio-design"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_SharePoint_PDF_TO_DZ')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endpoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"TARGET_FOLDER_PATH": {
+						"type": "string"
+					},
+					"TARGET_FILE_NAME": {
+						"type": "string"
+					},
+					"FILE_PATH": {
+						"type": "string"
+					},
+					"ds_param_endpoint": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "4 - Drop-Zone"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().TARGET_FILE_NAME",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat(dataset().FILE_PATH, '/', dataset().TARGET_FOLDER_PATH)",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_AzureSQLDatabase')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_AzureSqlDatabase",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_serverName": {
+							"value": "@dataset().ls_param_serverName",
+							"type": "Expression"
+						},
+						"ls_param_databaseName": {
+							"value": "@dataset().ls_param_databaseName",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_tableSchema": {
+						"type": "string"
+					},
+					"ds_param_tableName": {
+						"type": "string"
+					},
+					"ls_param_serverName": {
+						"type": "string"
+					},
+					"ls_param_databaseName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "1 - Databases"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().ds_param_tableSchema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().ds_param_tableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SRC_ADLS_GenericParquetFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Generic",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_folder": {
+						"type": "String"
+					},
+					"ds_param_fileName": {
+						"type": "String"
+					},
+					"ds_param_fileSystem": {
+						"type": "string",
+						"defaultValue": "landing"
+					},
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://vndatapltfv2devst02.dfs.core.windows.net"
+					}
+				},
+				"folder": {
+					"name": "2 - Landing"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().ds_param_fileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_fileSystem",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SRC_ADLS_JSON_LND')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string"
+					},
+					"ds_param_folder": {
+						"type": "string"
+					},
+					"ds_param_fileSystem": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "2 - Landing"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_fileSystem",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SRC_ADSL_AEMO_NEMDE_Metadata')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_DataLake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_container": {
+						"type": "string",
+						"defaultValue": "raw"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "AEMO/NEMDE"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "Xml",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_container",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SRC_ADSL_AEMO_NEMDE_XmlFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_DataLake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_container": {
+						"type": "string",
+						"defaultValue": "raw"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "AEMO/NEMDE"
+					},
+					"ds_param_filename": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "Xml",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().ds_param_filename",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_container",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SRC_ADSL_MSATS_SnapshotXmlFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": "https://cqldevdatahubdata.dfs.core.windows.net"
+					}
+				},
+				"parameters": {
+					"ds_param_container": {
+						"type": "string",
+						"defaultValue": "drop-zone"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "aemo/msats_snapshots/nmimaster"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "Xml",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_container",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_ADB_JobCluster01')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Not in Use",
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-6955339884354075.15.azuredatabricks.net",
+					"accessToken": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "access-token-mmg-aa-dbk01"
+					},
+					"newClusterNodeType": "Standard_DS3_v2",
+					"newClusterNumOfWorker": "2:10",
+					"newClusterSparkConf": {
+						"spark.databricks.session.share": "true"
+					},
+					"newClusterSparkEnvVars": {
+						"PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+					},
+					"newClusterVersion": "7.1.x-scala2.12",
+					"newClusterDriverNodeType": "Standard_DS4_v2",
+					"clusterOption": "Fixed",
+					"newClusterInitScripts": []
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_AFUNC_DatalakeExtractors')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Not in Use",
+				"annotations": [],
+				"type": "AzureFunction",
+				"typeProperties": {
+					"functionAppUrl": "[parameters('LS_AFUNC_DatalakeExtractors_properties_typeProperties_functionAppUrl')]",
+					"authentication": "Anonymous",
+					"functionKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "function-key-vn-datapltfv2-dev-func-extractors"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_AFUNC_DatalakeFramework')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Not in Use",
+				"annotations": [],
+				"type": "AzureFunction",
+				"typeProperties": {
+					"functionAppUrl": "[parameters('LS_AFUNC_DatalakeFramework_properties_typeProperties_functionAppUrl')]",
+					"authentication": "Anonymous",
+					"functionKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "function-key-vn-datapltfv2-dev-func-utility"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_BOM_SFTP')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "Sftp",
+				"typeProperties": {
+					"host": "[parameters('LS_BOM_SFTP_properties_typeProperties_host')]",
+					"port": 22,
+					"skipHostKeyValidation": true,
+					"authenticationType": "SshPublicKey",
+					"userName": "[parameters('LS_BOM_SFTP_properties_typeProperties_userName')]",
+					"privateKeyContent": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "cleanco-bom-ssh-private-key"
+					},
+					"passPhrase": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "bom-ssh-private-key-passphrase"
+					}
+				},
+				"connectVia": {
+					"referenceName": "SelfHostedIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_REST_PIWebAPI')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"parameters": {
+					"ls_param_adfserviceacct_username": {
+						"type": "string"
+					},
+					"ls_param_base_url": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('LS_REST_PIWebAPI_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": false,
+					"authenticationType": "Basic",
+					"userName": "[parameters('LS_REST_PIWebAPI_properties_typeProperties_userName')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "cleanco-datahub-serviceaccount-password"
+					}
+				},
+				"connectVia": {
+					"referenceName": "SelfHostedIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_SQL_OnPremiseSources')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Not in Use",
+				"parameters": {
+					"ls_param_serverName": {
+						"type": "string"
+					},
+					"ls_param_databaseName": {
+						"type": "string"
+					},
+					"ls_param_username": {
+						"type": "string"
+					},
+					"ls_param_password_keyvault_secret": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_SQL_OnPremiseSources_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": {
+							"value": "@linkedService().ls_param_password_keyvault_secret",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_SQL_SqlServer')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Not in Use",
+				"parameters": {
+					"ls_param_serverName": {
+						"type": "string"
+					},
+					"ls_param_databaseName": {
+						"type": "string"
+					},
+					"ls_param_username": {
+						"type": "string"
+					},
+					"ls_param_password_keyvault_secret": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_SQL_SqlServer_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": {
+							"value": "@linkedService().ls_param_password_keyvault_secret",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_TradingOps_FS')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureFileStorage",
+				"typeProperties": {
+					"sasUri": "[parameters('LS_TradingOps_FS_sasUri')]",
+					"sasToken": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "[parameters('LS_TradingOps_FS_properties_typeProperties_sasToken_secretName')]"
+					},
+					"fileShare": "tradingopsfs"
+				},
+				"connectVia": {
+					"referenceName": "SelfHostedIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AutoResolveIntegrationRuntime')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 0
+						}
+					}
+				},
+				"managedVirtualNetwork": {
+					"type": "ManagedVirtualNetworkReference",
+					"referenceName": "default"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/Purview-DataFactory-PE')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('Purview-DataFactory-PE_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('Purview-DataFactory-PE_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/Purview-DataFactory-PE_blob')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('Purview-DataFactory-PE_blob_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('Purview-DataFactory-PE_blob_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/Purview-DataFactory-PE_queue')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('Purview-DataFactory-PE_queue_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('Purview-DataFactory-PE_queue_properties_groupId')]"
+			},
+			"dependsOn": []
+		}
+	]
+}

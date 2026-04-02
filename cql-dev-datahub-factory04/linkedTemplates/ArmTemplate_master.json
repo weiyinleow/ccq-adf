@@ -1,0 +1,806 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "cql-dev-datahub-factory04"
+		},
+		"LS_ADB_Int01_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'LS_ADB_Int01'"
+		},
+		"LS_SQL_AzureSqlDatabase_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_AzureSqlDatabase'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName}"
+		},
+		"LS_SQL_ELTFrameworkDB01_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_ELTFrameworkDB01'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=cql-dev-datahub-sql.database.windows.net;Initial Catalog=data-platform-framework-controldb"
+		},
+		"LS_SQL_OnPremiseSources_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_OnPremiseSources'",
+			"defaultValue": "Integrated Security=False;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName};User ID=@{linkedService().ls_param_username}"
+		},
+		"LS_SQL_SqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_SqlServer'",
+			"defaultValue": "Integrated Security=False;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName};User ID=@{linkedService().ls_param_username}"
+		},
+		"LS_SQL_Synapse01_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_Synapse01'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName}"
+		},
+		"DS_CFG_ADLS_GenericConfigFile_properties_typeProperties_fileName": {
+			"type": "string",
+			"defaultValue": "@{dataset().ds_param_ConfigFileName}"
+		},
+		"DS_CFG_ADLS_GenericConfigFile_properties_typeProperties_folderPath": {
+			"type": "string",
+			"defaultValue": "@{dataset().ds_param_ConfigFilePath}"
+		},
+		"LS_ABLB_Generic_properties_typeProperties_serviceEndpoint": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_ABLB_Landing_properties_typeProperties_serviceEndpoint": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_ADB_Int01_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "@linkedService().ls_param_clusterId"
+		},
+		"LS_ADLS2_Config_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://cqldevdatahubsynapse.dfs.core.windows.net"
+		},
+		"LS_ADLS2_DataLake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://cqldevdatahubsynapse.dfs.core.windows.net/"
+		},
+		"LS_ADLS2_Generic_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_ADLS2_Landing_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_ADLS2_Landing_properties_typeProperties_serviceEndpoint": {
+			"type": "string",
+			"defaultValue": "https://mmgaeaaastr01e3.dfs.core.windows.net/"
+		},
+		"LS_ADX_GenericCluster_properties_typeProperties_endpoint": {
+			"type": "string",
+			"defaultValue": "https://vndatapltfdevadx.australiaeast.kusto.windows.net"
+		},
+		"LS_ADX_GenericCluster_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "adxdemo"
+		},
+		"LS_AFUNC_DatalakeExtractors_properties_typeProperties_functionAppUrl": {
+			"type": "string",
+			"defaultValue": "https://vn-datapltfv2-dev-func-extractors.azurewebsites.net"
+		},
+		"LS_AFUNC_DatalakeFramework_properties_typeProperties_functionAppUrl": {
+			"type": "string",
+			"defaultValue": "https://vn-datapltfv2-dev-func-utility.azurewebsites.net"
+		},
+		"LS_AFUNC_Notifications_properties_typeProperties_functionAppUrl": {
+			"type": "string",
+			"defaultValue": "https://cqldevdatahub-core-framework.azurewebsites.net"
+		},
+		"LS_AKV_AA_KV01_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://cql-dev-datahub-key.vault.azure.net/"
+		},
+		"LS_BOM_FTP_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "ftp.bom.gov.au"
+		},
+		"LS_BOM_FTP_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "bom1312"
+		},
+		"LS_BOM_SFTP_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "sftp-reg.cloud.bom.gov.au"
+		},
+		"LS_BOM_SFTP_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "bom1312"
+		},
+		"LS_REST_PIWebAPI_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_base_url}"
+		},
+		"LS_REST_PIWebAPI_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_adfserviceacct_username}"
+		},
+		"LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "cql-prd-shared.database.windows.net"
+		},
+		"LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "CPRS"
+		},
+		"LS_SharePoint_List01_properties_typeProperties_servicePrincipalId": {
+			"type": "string",
+			"defaultValue": "dfb31466-fdbf-4d64-9d83-f1cad12b25e1"
+		},
+		"LS_Sharepoint_Folder_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "@{linkedService().param_sharepoint_baseURL}"
+		},
+		"LS_Synapse_Analytics_Artifacts01_properties_typeProperties_endpoint": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_TradingOps_FS_sasUri": {
+			"type": "secureString",
+			"metadata": "Secure string for 'sasUri' of 'LS_TradingOps_FS'"
+		},
+		"LS_TradingOps_FS_properties_typeProperties_sasToken_secretName": {
+			"type": "string",
+			"defaultValue": "cleanco-aemo-msats-archive-sas-token"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pSftpDirectory": {
+			"type": "string",
+			"defaultValue": "/register/bom1312/fwo"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pDatasetName": {
+			"type": "string",
+			"defaultValue": "obs_10min"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pSftpDropzoneRoot": {
+			"type": "string",
+			"defaultValue": "bom/obs_10min/sftp"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pLandingRoot": {
+			"type": "string",
+			"defaultValue": "bom/obs_10min"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pFileName": {
+			"type": "string",
+			"defaultValue": "IDQ60920.xml"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pftpDirectory": {
+			"type": "string",
+			"defaultValue": "fwo"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pftpDropzoneRoot": {
+			"type": "string",
+			"defaultValue": "bom/obs_10min/ftp"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pBronzeRoot": {
+			"type": "string",
+			"defaultValue": "bom/obs_10min"
+		},
+		"Weekend_CurrentMonth_Run_properties_RetailUseCase_parameters_mpl_param_archive_Path": {
+			"type": "string",
+			"defaultValue": "@toLower(formatDateTime(utcNow(), 'yyyy/MM-MMM'))"
+		},
+		"Weekend_PreviousMonth_Run_properties_RetailUseCase_parameters_mpl_param_archive_Path": {
+			"type": "string",
+			"defaultValue": "@toLower(formatDateTime(addToTime(utcNow(), -1, 'Month'), 'yyyy/MM-MMM'))"
+		},
+		"Purview-DataFactory-PE_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/e7a5cadd-075a-4f64-a30b-b83175afd0aa/resourceGroups/CQL-AZUR1-PRODDATAHUB01-RG/providers/Microsoft.Purview/accounts/CQL-PROD-DATAHUB-PURVIEW"
+		},
+		"Purview-DataFactory-PE_properties_groupId": {
+			"type": "string",
+			"defaultValue": "account"
+		},
+		"Purview-DataFactory-PE_blob_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/ef36d528-531d-4e40-9231-12300b0cc406/resourceGroups/ingestion-storage-rg-australiaeast-5/providers/Microsoft.Storage/storageAccounts/ingestionaegdsmova"
+		},
+		"Purview-DataFactory-PE_blob_properties_groupId": {
+			"type": "string",
+			"defaultValue": "blob"
+		},
+		"Purview-DataFactory-PE_queue_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/ef36d528-531d-4e40-9231-12300b0cc406/resourceGroups/ingestion-storage-rg-australiaeast-5/providers/Microsoft.Storage/storageAccounts/ingestionaegdsmova"
+		},
+		"Purview-DataFactory-PE_queue_properties_groupId": {
+			"type": "string",
+			"defaultValue": "queue"
+		},
+		"cqldatahub-core-framework-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Web/sites/cqldevdatahub-core-framework"
+		},
+		"cqldatahub-core-framework-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sites"
+		},
+		"cqldatahubdata01-blob-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubdata"
+		},
+		"cqldatahubdata01-blob-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "blob"
+		},
+		"cqldatahubdata01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubdata"
+		},
+		"cqldatahubdata01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dfs"
+		},
+		"cqldatahubkey01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.KeyVault/vaults/cql-dev-datahub-key"
+		},
+		"cqldatahubkey01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "vault"
+		},
+		"cqldatahublogs01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahublogs"
+		},
+		"cqldatahublogs01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dfs"
+		},
+		"cqldatahubsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Sql/servers/cql-dev-datahub-sql"
+		},
+		"cqldatahubsql01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sqlServer"
+		},
+		"cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dev"
+		},
+		"cqldatahubsynapse01-blob-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubsynapse"
+		},
+		"cqldatahubsynapse01-blob-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "blob"
+		},
+		"cqldatahubsynapse01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubsynapse"
+		},
+		"cqldatahubsynapse01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dfs"
+		},
+		"cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sqlOnDemand"
+		},
+		"cqldatahubsynapse01-sql-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-sql-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sql"
+		},
+		"cqlsharedsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/f954f177-4db6-46db-9a99-2bf59d22c1fa/resourceGroups/CQL-AZUR1-PRODSHARED01-DB-RG/providers/Microsoft.Sql/servers/cql-prd-shared"
+		},
+		"cqlsharedsql01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sqlServer"
+		},
+		"cqlsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/52427805-cf5b-4ce1-beb7-1005dfb46a64/resourceGroups/CQL-AZUR1-NONPRODDEV01-RG/providers/Microsoft.Sql/servers/cql-dev"
+		},
+		"cqlsql01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sqlServer"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"LS_ADB_Int01_accessToken": {
+						"value": "[parameters('LS_ADB_Int01_accessToken')]"
+					},
+					"LS_SQL_AzureSqlDatabase_connectionString": {
+						"value": "[parameters('LS_SQL_AzureSqlDatabase_connectionString')]"
+					},
+					"LS_ABLB_Generic_properties_typeProperties_serviceEndpoint": {
+						"value": "[parameters('LS_ABLB_Generic_properties_typeProperties_serviceEndpoint')]"
+					},
+					"LS_ABLB_Landing_properties_typeProperties_serviceEndpoint": {
+						"value": "[parameters('LS_ABLB_Landing_properties_typeProperties_serviceEndpoint')]"
+					},
+					"LS_ADB_Int01_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('LS_ADB_Int01_properties_typeProperties_existingClusterId')]"
+					},
+					"LS_ADLS2_Config_properties_typeProperties_url": {
+						"value": "[parameters('LS_ADLS2_Config_properties_typeProperties_url')]"
+					},
+					"LS_ADLS2_DataLake_properties_typeProperties_url": {
+						"value": "[parameters('LS_ADLS2_DataLake_properties_typeProperties_url')]"
+					},
+					"LS_ADLS2_Generic_properties_typeProperties_url": {
+						"value": "[parameters('LS_ADLS2_Generic_properties_typeProperties_url')]"
+					},
+					"LS_ADLS2_Landing_properties_typeProperties_url": {
+						"value": "[parameters('LS_ADLS2_Landing_properties_typeProperties_url')]"
+					},
+					"LS_ADLS2_Landing_properties_typeProperties_serviceEndpoint": {
+						"value": "[parameters('LS_ADLS2_Landing_properties_typeProperties_serviceEndpoint')]"
+					},
+					"LS_ADX_GenericCluster_properties_typeProperties_endpoint": {
+						"value": "[parameters('LS_ADX_GenericCluster_properties_typeProperties_endpoint')]"
+					},
+					"LS_ADX_GenericCluster_properties_typeProperties_database": {
+						"value": "[parameters('LS_ADX_GenericCluster_properties_typeProperties_database')]"
+					},
+					"LS_AKV_AA_KV01_properties_typeProperties_baseUrl": {
+						"value": "[parameters('LS_AKV_AA_KV01_properties_typeProperties_baseUrl')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"DS_CFG_ADLS_GenericConfigFile_properties_typeProperties_fileName": {
+						"value": "[parameters('DS_CFG_ADLS_GenericConfigFile_properties_typeProperties_fileName')]"
+					},
+					"DS_CFG_ADLS_GenericConfigFile_properties_typeProperties_folderPath": {
+						"value": "[parameters('DS_CFG_ADLS_GenericConfigFile_properties_typeProperties_folderPath')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_0')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_2",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_2.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_1')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_3",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_3.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"LS_SQL_OnPremiseSources_connectionString": {
+						"value": "[parameters('LS_SQL_OnPremiseSources_connectionString')]"
+					},
+					"LS_SQL_SqlServer_connectionString": {
+						"value": "[parameters('LS_SQL_SqlServer_connectionString')]"
+					},
+					"LS_AFUNC_DatalakeExtractors_properties_typeProperties_functionAppUrl": {
+						"value": "[parameters('LS_AFUNC_DatalakeExtractors_properties_typeProperties_functionAppUrl')]"
+					},
+					"LS_AFUNC_DatalakeFramework_properties_typeProperties_functionAppUrl": {
+						"value": "[parameters('LS_AFUNC_DatalakeFramework_properties_typeProperties_functionAppUrl')]"
+					},
+					"LS_BOM_SFTP_properties_typeProperties_host": {
+						"value": "[parameters('LS_BOM_SFTP_properties_typeProperties_host')]"
+					},
+					"LS_BOM_SFTP_properties_typeProperties_userName": {
+						"value": "[parameters('LS_BOM_SFTP_properties_typeProperties_userName')]"
+					},
+					"LS_REST_PIWebAPI_properties_typeProperties_url": {
+						"value": "[parameters('LS_REST_PIWebAPI_properties_typeProperties_url')]"
+					},
+					"LS_REST_PIWebAPI_properties_typeProperties_userName": {
+						"value": "[parameters('LS_REST_PIWebAPI_properties_typeProperties_userName')]"
+					},
+					"LS_TradingOps_FS_sasUri": {
+						"value": "[parameters('LS_TradingOps_FS_sasUri')]"
+					},
+					"LS_TradingOps_FS_properties_typeProperties_sasToken_secretName": {
+						"value": "[parameters('LS_TradingOps_FS_properties_typeProperties_sasToken_secretName')]"
+					},
+					"Purview-DataFactory-PE_properties_privateLinkResourceId": {
+						"value": "[parameters('Purview-DataFactory-PE_properties_privateLinkResourceId')]"
+					},
+					"Purview-DataFactory-PE_properties_groupId": {
+						"value": "[parameters('Purview-DataFactory-PE_properties_groupId')]"
+					},
+					"Purview-DataFactory-PE_blob_properties_privateLinkResourceId": {
+						"value": "[parameters('Purview-DataFactory-PE_blob_properties_privateLinkResourceId')]"
+					},
+					"Purview-DataFactory-PE_blob_properties_groupId": {
+						"value": "[parameters('Purview-DataFactory-PE_blob_properties_groupId')]"
+					},
+					"Purview-DataFactory-PE_queue_properties_privateLinkResourceId": {
+						"value": "[parameters('Purview-DataFactory-PE_queue_properties_privateLinkResourceId')]"
+					},
+					"Purview-DataFactory-PE_queue_properties_groupId": {
+						"value": "[parameters('Purview-DataFactory-PE_queue_properties_groupId')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_2')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_4",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_4.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"cqldatahub-core-framework-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahub-core-framework-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahub-core-framework-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahub-core-framework-endpoint_properties_groupId')]"
+					},
+					"cqldatahubdata01-blob-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubdata01-blob-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubdata01-blob-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubdata01-blob-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahubdata01-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubdata01-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubdata01-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubdata01-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahubkey01-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubkey01-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubkey01-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubkey01-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahublogs01-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahublogs01-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahublogs01-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahublogs01-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahubsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubsql01-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubsql01-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubsql01-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahubsynapse01-blob-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubsynapse01-blob-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubsynapse01-blob-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubsynapse01-blob-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahubsynapse01-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubsynapse01-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubsynapse01-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubsynapse01-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqldatahubsynapse01-sql-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqldatahubsynapse01-sql-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqldatahubsynapse01-sql-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqldatahubsynapse01-sql-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqlsharedsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqlsharedsql01-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqlsharedsql01-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqlsharedsql01-datafactory01-endpoint_properties_groupId')]"
+					},
+					"cqlsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+						"value": "[parameters('cqlsql01-datafactory01-endpoint_properties_privateLinkResourceId')]"
+					},
+					"cqlsql01-datafactory01-endpoint_properties_groupId": {
+						"value": "[parameters('cqlsql01-datafactory01-endpoint_properties_groupId')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_3')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_5",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_5.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"LS_AFUNC_Notifications_properties_typeProperties_functionAppUrl": {
+						"value": "[parameters('LS_AFUNC_Notifications_properties_typeProperties_functionAppUrl')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_4')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_6",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_6.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"LS_SQL_ELTFrameworkDB01_connectionString": {
+						"value": "[parameters('LS_SQL_ELTFrameworkDB01_connectionString')]"
+					},
+					"LS_SQL_Synapse01_connectionString": {
+						"value": "[parameters('LS_SQL_Synapse01_connectionString')]"
+					},
+					"LS_BOM_FTP_properties_typeProperties_host": {
+						"value": "[parameters('LS_BOM_FTP_properties_typeProperties_host')]"
+					},
+					"LS_BOM_FTP_properties_typeProperties_userName": {
+						"value": "[parameters('LS_BOM_FTP_properties_typeProperties_userName')]"
+					},
+					"LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_server": {
+						"value": "[parameters('LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_server')]"
+					},
+					"LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_database": {
+						"value": "[parameters('LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_database')]"
+					},
+					"LS_SharePoint_List01_properties_typeProperties_servicePrincipalId": {
+						"value": "[parameters('LS_SharePoint_List01_properties_typeProperties_servicePrincipalId')]"
+					},
+					"LS_Sharepoint_Folder_properties_typeProperties_url": {
+						"value": "[parameters('LS_Sharepoint_Folder_properties_typeProperties_url')]"
+					},
+					"LS_Synapse_Analytics_Artifacts01_properties_typeProperties_endpoint": {
+						"value": "[parameters('LS_Synapse_Analytics_Artifacts01_properties_typeProperties_endpoint')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_5')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_7",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_7.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_6')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_8",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_8.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_7')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_9",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_9.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pSftpDirectory": {
+						"value": "[parameters('TR_Every_10Min_properties_PL_BOM_Obs_parameters_pSftpDirectory')]"
+					},
+					"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pDatasetName": {
+						"value": "[parameters('TR_Every_10Min_properties_PL_BOM_Obs_parameters_pDatasetName')]"
+					},
+					"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pSftpDropzoneRoot": {
+						"value": "[parameters('TR_Every_10Min_properties_PL_BOM_Obs_parameters_pSftpDropzoneRoot')]"
+					},
+					"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pLandingRoot": {
+						"value": "[parameters('TR_Every_10Min_properties_PL_BOM_Obs_parameters_pLandingRoot')]"
+					},
+					"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pFileName": {
+						"value": "[parameters('TR_Every_10Min_properties_PL_BOM_Obs_parameters_pFileName')]"
+					},
+					"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pftpDirectory": {
+						"value": "[parameters('TR_Every_10Min_properties_PL_BOM_Obs_parameters_pftpDirectory')]"
+					},
+					"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pftpDropzoneRoot": {
+						"value": "[parameters('TR_Every_10Min_properties_PL_BOM_Obs_parameters_pftpDropzoneRoot')]"
+					},
+					"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pBronzeRoot": {
+						"value": "[parameters('TR_Every_10Min_properties_PL_BOM_Obs_parameters_pBronzeRoot')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_8')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_10",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_10.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_9')]"
+			]
+		},
+		{
+			"name": "cql-dev-datahub-factory04_ArmTemplate_11",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_11.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"Weekend_CurrentMonth_Run_properties_RetailUseCase_parameters_mpl_param_archive_Path": {
+						"value": "[parameters('Weekend_CurrentMonth_Run_properties_RetailUseCase_parameters_mpl_param_archive_Path')]"
+					},
+					"Weekend_PreviousMonth_Run_properties_RetailUseCase_parameters_mpl_param_archive_Path": {
+						"value": "[parameters('Weekend_PreviousMonth_Run_properties_RetailUseCase_parameters_mpl_param_archive_Path')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'cql-dev-datahub-factory04_ArmTemplate_10')]"
+			]
+		}
+	]
+}

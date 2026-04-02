@@ -1,0 +1,2264 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "cql-dev-datahub-factory04"
+		},
+		"LS_SQL_ELTFrameworkDB01_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_ELTFrameworkDB01'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=cql-dev-datahub-sql.database.windows.net;Initial Catalog=data-platform-framework-controldb"
+		},
+		"LS_SQL_Synapse01_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_Synapse01'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName}"
+		},
+		"LS_BOM_FTP_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "ftp.bom.gov.au"
+		},
+		"LS_BOM_FTP_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "bom1312"
+		},
+		"LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "cql-prd-shared.database.windows.net"
+		},
+		"LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "CPRS"
+		},
+		"LS_SharePoint_List01_properties_typeProperties_servicePrincipalId": {
+			"type": "string",
+			"defaultValue": "dfb31466-fdbf-4d64-9d83-f1cad12b25e1"
+		},
+		"LS_Sharepoint_Folder_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "@{linkedService().param_sharepoint_baseURL}"
+		},
+		"LS_Synapse_Analytics_Artifacts01_properties_typeProperties_endpoint": {
+			"type": "string",
+			"defaultValue": "@{linkedService().ls_param_endpoint}"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_BOM_FTP')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "FtpServer",
+				"typeProperties": {
+					"host": "[parameters('LS_BOM_FTP_properties_typeProperties_host')]",
+					"port": "21",
+					"enableSsl": false,
+					"enableServerCertificateValidation": false,
+					"authenticationType": "Basic",
+					"userName": "[parameters('LS_BOM_FTP_properties_typeProperties_userName')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "bom-backup-ftp-password"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_SQL_AzureSqlDatabase_CPRS')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "connects to CPRS Prod server",
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_server')]",
+					"database": "[parameters('LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": true,
+					"authenticationType": "SystemAssignedManagedIdentity"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_SQL_ELTFrameworkDB01')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_SQL_ELTFrameworkDB01_connectionString')]",
+					"alwaysEncryptedSettings": {
+						"alwaysEncryptedAkvAuthType": "ManagedIdentity"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_SQL_Synapse01')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"parameters": {
+					"ls_param_serverName": {
+						"type": "string",
+						"defaultValue": "cql-dev-datahub-synapse01.sql.azuresynapse.net"
+					},
+					"ls_param_databaseName": {
+						"type": "string",
+						"defaultValue": "cqldevdatahubdsql01"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_SQL_Synapse01_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_SharePoint_List01')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SharePointOnlineList",
+				"typeProperties": {
+					"siteUrl": "https://cleancoqueensland.sharepoint.com/sites/app-DataHub",
+					"tenantId": "22a3df9b-ba07-4cf7-97c5-5dd4ff48c62f",
+					"servicePrincipalId": "[parameters('LS_SharePoint_List01_properties_typeProperties_servicePrincipalId')]",
+					"servicePrincipalKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "LS_AKV_AA_KV01",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "SharePointApplicationKey"
+					}
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_Sharepoint_Folder')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"parameters": {
+					"param_sharepoint_baseURL": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('LS_Sharepoint_Folder_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_Synapse_Analytics_Artifacts01')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"parameters": {
+					"ls_param_endpoint": {
+						"type": "string",
+						"defaultValue": "https://cql-dev-datahub-synapse01.dev.azuresynapse.net"
+					},
+					"ls_param_workspace_id": {
+						"type": "string",
+						"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSynapseArtifacts",
+				"typeProperties": {
+					"endpoint": "[parameters('LS_Synapse_Analytics_Artifacts01_properties_typeProperties_endpoint')]",
+					"authentication": "MSI",
+					"workspaceResourceId": "@{linkedService().ls_param_workspace_id}"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/BoM_dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "BoM_XML",
+								"type": "DatasetReference"
+							},
+							"name": "BomObsSource"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "LS_ADLS2_Generic",
+								"type": "LinkedServiceReference"
+							},
+							"name": "BomObsSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "BomObsFlatten"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          product as ({@version} as string, amoc as (identifier as string, {issue-time-local} as ({@tz} as string, {_value_} as string), {issue-time-utc} as string, phase as string, {product-type} as string, {sent-time} as string, service as string, source as (copyright as string, disclaimer as string, office as string, region as string, sender as string), status as string), observations as (station as ({@bom-id} as integer, {@description} as string, {@forecast-district-id} as string, {@lat} as double, {@lon} as double, {@stn-height} as double, {@stn-name} as string, {@type} as string, {@tz} as string, {@wmo-id} as integer, period as ({@index} as boolean, {@time-local} as string, {@time-utc} as string, {@wind-src} as string, level as ({@index} as boolean, {@type} as string, element as ({@duration} as short, {@end-time-local} as string, {@end-time-utc} as string, {@instance} as string, {@start-time-local} as string, {@start-time-utc} as string, {@time-local} as string, {@time-utc} as string, {@type} as string, {@units} as string, {_value_} as string)[])))[]))",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     inferDriftedColumnTypes: true,",
+						"     ignoreNoFilesFound: false,",
+						"     validationMode: 'none',",
+						"     namespaces: true) ~> BomObsSource",
+						"BomObsSource foldDown(unroll(product.observations.station.period.level.element),",
+						"     mapColumn(",
+						"          version = product.{@version},",
+						"          issuetimelocal = product.amoc.identifier,",
+						"          AmocTz = product.amoc.{issue-time-local}.{@tz},",
+						"          AmocValue = product.amoc.{issue-time-local}.{_value_},",
+						"          AmocIssueTimeUtc = product.amoc.{issue-time-utc},",
+						"          AmocPhase = product.amoc.phase,",
+						"          AmocProductType = product.amoc.{product-type},",
+						"          AmocSentTime = product.amoc.{sent-time},",
+						"          AmocService = product.amoc.service,",
+						"          Copyright = product.amoc.source.copyright,",
+						"          Disclaimer = product.amoc.source.disclaimer,",
+						"          Office = product.amoc.source.office,",
+						"          Region = product.amoc.source.region,",
+						"          Sender = product.amoc.source.sender,",
+						"          Status = product.amoc.status,",
+						"          BomID = product.observations.station.{@bom-id},",
+						"          Description = product.observations.station.{@description},",
+						"          ForecastDistrictID = product.observations.station.{@forecast-district-id},",
+						"          ObsrLat = product.observations.station.{@lat},",
+						"          ObsrLon = product.observations.station.{@lon},",
+						"          StnHeight = product.observations.station.{@stn-height},",
+						"          StnName = product.observations.station.{@stn-name},",
+						"          StnType = product.observations.station.{@type},",
+						"          StnTz = product.observations.station.{@tz},",
+						"          wmoID = product.observations.station.{@wmo-id},",
+						"          StnIndex = product.observations.station.period.{@index},",
+						"          StnLvlType = product.observations.station.period.level.{@type},",
+						"          ElementDuration = product.observations.station.period.level.element.{@duration},",
+						"          ElementEndTimeLocal = product.observations.station.period.level.element.{@end-time-local},",
+						"          ElementEndTimeUtc = product.observations.station.period.level.element.{@end-time-utc},",
+						"          ElementInstance = product.observations.station.period.level.element.{@instance},",
+						"          ElementStartTimeLocal = product.observations.station.period.level.element.{@start-time-local},",
+						"          ElementStartTimeUtc = product.observations.station.period.level.element.{@start-time-utc},",
+						"          ElementTimeLocal = product.observations.station.period.level.element.{@time-local},",
+						"          ElementTimeUtc = product.observations.station.period.level.element.{@time-utc},",
+						"          ElementType = product.observations.station.period.level.element.{@type},",
+						"          ElementUnits = product.observations.station.period.level.element.{@units},",
+						"          ElementValue = product.observations.station.period.level.element.{_value_}",
+						"     ),",
+						"     skipDuplicateMapInputs: false,",
+						"     skipDuplicateMapOutputs: false) ~> BomObsFlatten",
+						"BomObsFlatten sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'delta',",
+						"     fileSystem: 'bronze',",
+						"     folderPath: 'bom/obs10min',",
+						"     mergeSchema: false,",
+						"     autoCompact: false,",
+						"     optimizedWrite: false,",
+						"     vacuum: 0,",
+						"     deletable: false,",
+						"     insertable: true,",
+						"     updateable: false,",
+						"     upsertable: false,",
+						"     partitionFileNames:['IDQ60920.parquet'],",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> BomObsSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AEMODim_Load')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "AEMO_Gold_DimTables",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "AEMO_Gold_DimTables",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool03",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Large",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Large"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/RetailUseCase/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_Synapse_Analytics_Artifacts01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AEMO_NEMDE_SRC_TO_DZ_AzureBlob')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "AEMO_NEMDE_FileCopy",
+						"description": "Copy NEMDE Files from AEMO tradingopsfs storage account",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureFileStorageReadSettings",
+									"recursive": true
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_AFS_DropZone_Generic_NEMDE",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_path": {
+										"value": "nemde",
+										"type": "Expression"
+									},
+									"ds_param_archive_path": {
+										"value": "@pipeline().parameters.pl_param_archive_path",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic_NEMDE",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"type": "Expression"
+									},
+									"ds_param_folder": "drop-zone",
+									"ds_param_archive_path": {
+										"value": "@pipeline().parameters.pl_param_archive_path",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_archive_path": {
+						"type": "string",
+						"defaultValue": "20251006"
+					}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/AEMONEMDE/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AEMO_NEMDE_SRC_TO_DZ_FullLoad')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "AEMO_NEMDE_All_Files",
+						"description": "Copy all date folders from NEMDE folder of AEMO tradingopsfs storage account",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureFileStorageReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.zip",
+									"deleteFilesAfterCompletion": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_AFS_DropZone_Generic_AllFolders",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_path": "nemde"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic_AllFolders",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+										"type": "Expression"
+									},
+									"ds_param_folder": "drop-zone",
+									"ds_param_path": "AEMO_NEMDE_zip"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/AEMONEMDE/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_GET_SCHEMA_JsonFromFile')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "setSchemaDefinition",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "getSchemaFromFile",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[CTL].[USP_SET_INGESTION_SCHEMA_DEFINITION_JSON]",
+							"storedProcedureParameters": {
+								"connectionId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_connectionId",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"ingestionSchemaName": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_schemaName",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"json": {
+									"value": {
+										"value": "@string(activity('getSchemaFromFile').output.value)",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_SQL_ELTFrameworkDB01",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "getSchemaFromFile",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "DS_CFG_ADLS_GenericCsvConfigFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_ConfigFilePath": {
+										"value": "@pipeline().parameters.pl_param_path",
+										"type": "Expression"
+									},
+									"ds_param_ConfigFileName": {
+										"value": "@pipeline().parameters.pl_param_file",
+										"type": "Expression"
+									},
+									"ds_param_EndPoint": "https://vndatapltfv2devst01.blob.core.windows.net"
+								}
+							},
+							"firstRowOnly": false
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_connectionId": {
+						"type": "int",
+						"defaultValue": 21
+					},
+					"pl_param_schemaName": {
+						"type": "string",
+						"defaultValue": "Demo Metering Schema"
+					},
+					"pl_param_path": {
+						"type": "string",
+						"defaultValue": "sources/demo/telemetry/"
+					},
+					"pl_param_file": {
+						"type": "string",
+						"defaultValue": "telemetaryDemoSchema.csv"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/Utility/Schema Utilities"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-11-09T05:16:19Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ELTFrameworkDB01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_LND_TO_DB_AzureSqlDatabase')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Need to add watermark consideration rather than wildcard.",
+				"activities": [
+					{
+						"name": "copy",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "logWorkerStart",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@concat(pipeline().parameters.pl_param_item.TARGET_SCHEMA,'/',pipeline().parameters.pl_param_item.TARGET_TABLE,'/')",
+										"type": "Expression"
+									},
+									"wildcardFileName": {
+										"value": "@{trim(toUpper(pipeline().parameters.pl_param_item.TARGET_TABLE))}__@{trim(pipeline().parameters.pl_param_item.LOAD_TYPE)}_*",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "ParquetReadSettings"
+								}
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"writeBehavior": "insert",
+								"tableOption": "autoCreate"
+							},
+							"enableStaging": false,
+							"enableSkipIncompatibleRow": true,
+							"redirectIncompatibleRowSettings": {
+								"linkedServiceName": {
+									"referenceName": "LS_ADLS2_Landing",
+									"type": "LinkedServiceReference"
+								}
+							},
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_SRC_ADLS_GenericParquetFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_folder": "notRequiredAsWildcard",
+									"ds_param_fileName": "notRequiredAsWildcard",
+									"ds_param_fileSystem": {
+										"value": "@{trim(pipeline().parameters.pl_param_loadConfig.LANDING_PATH)}",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SQL_SqlServer_GenericTable",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_tableSchema": {
+										"value": "@{pipeline().parameters.pl_param_item.TARGET_SCHEMA}",
+										"type": "Expression"
+									},
+									"ds_param_tableName": {
+										"value": "@{pipeline().parameters.pl_param_item.TARGET_TABLE}",
+										"type": "Expression"
+									},
+									"ls_param_serverName": {
+										"value": "@pipeline().parameters.pl_param_destinationConfig.SERVER_NAME",
+										"type": "Expression"
+									},
+									"ls_param_databaseName": {
+										"value": "@pipeline().parameters.pl_param_destinationConfig.DATABASE_NAME",
+										"type": "Expression"
+									},
+									"ls_param_username": {
+										"value": "@pipeline().parameters.pl_param_destinationConfig.USERNAME",
+										"type": "Expression"
+									},
+									"ls_param_password_keyvault_secret": {
+										"value": "@pipeline().parameters.pl_param_destinationConfig.PASSWORD_KEYVAULT_SECRET",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "logWorkerStart",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[CTL].[USP_LOG_WORKER_RUNNING]",
+							"storedProcedureParameters": {
+								"callingPipelineId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_pipelineId",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"callingPipelineRunId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_pipelineRunId",
+										"type": "Expression"
+									},
+									"type": "Guid"
+								},
+								"workerName": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"workerRunId": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "Guid"
+								},
+								"workerType": {
+									"value": "Ingest",
+									"type": "String"
+								},
+								"loadSetItemId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_SQL_ELTFrameworkDB01",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_item": {
+						"type": "object"
+					},
+					"pl_param_destinationConfig": {
+						"type": "object"
+					},
+					"pl_param_pipelineId": {
+						"type": "string"
+					},
+					"pl_param_pipelineRunId": {
+						"type": "string"
+					},
+					"pl_param_loadConfig": {
+						"type": "object"
+					}
+				},
+				"variables": {
+					"selectStatement": {
+						"type": "String"
+					},
+					"maxDeltaValue": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/2 - Landing to Store"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-11-09T05:16:20Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ELTFrameworkDB01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_LND_TO_DB_SqlServer')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "copy",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "logWorkerStart",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFolderPath": {
+										"value": "@{trim(pipeline().parameters.pl_param_loadConfig.LANDING_PATH)}",
+										"type": "Expression"
+									},
+									"wildcardFileName": {
+										"value": "@{trim(toUpper(pipeline().parameters.pl_param_item.TARGET_TABLE))}__@{trim(pipeline().parameters.pl_param_item.LOAD_TYPE)}_*",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "SqlServerSink",
+								"writeBehavior": "insert",
+								"tableOption": "autoCreate"
+							},
+							"enableStaging": false,
+							"enableSkipIncompatibleRow": true,
+							"redirectIncompatibleRowSettings": {
+								"linkedServiceName": {
+									"referenceName": "LS_ADLS2_Landing",
+									"type": "LinkedServiceReference"
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_SRC_ADLS_GenericParquetFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_folder": "notRequiredAsWildcard",
+									"ds_param_fileName": "notRequiredAsWildcard"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SQL_SqlServer_GenericTable",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_tableSchema": {
+										"value": "@{pipeline().parameters.pl_param_item.TARGET_SCHEMA}",
+										"type": "Expression"
+									},
+									"ds_param_tableName": {
+										"value": "@{pipeline().parameters.pl_param_item.TARGET_TABLE}",
+										"type": "Expression"
+									},
+									"ls_param_serverName": {
+										"value": "@pipeline().parameters.pl_param_destinationConfig.SERVER_NAME",
+										"type": "Expression"
+									},
+									"ls_param_databaseName": {
+										"value": "@pipeline().parameters.pl_param_destinationConfig.DATABASE_NAME",
+										"type": "Expression"
+									},
+									"ls_param_username": {
+										"value": "@pipeline().parameters.pl_param_destinationConfig.USERNAME",
+										"type": "Expression"
+									},
+									"ls_param_password_keyvault_secret": {
+										"value": "@pipeline().parameters.pl_param_destinationConfig.PASSWORD_KEYVAULT_SECRET",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "logWorkerStart",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[CTL].[USP_LOG_WORKER_RUNNING]",
+							"storedProcedureParameters": {
+								"callingPipelineId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_pipelineId",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"callingPipelineRunId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_pipelineRunId",
+										"type": "Expression"
+									},
+									"type": "Guid"
+								},
+								"workerName": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"workerRunId": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "Guid"
+								},
+								"workerType": {
+									"value": "Ingest",
+									"type": "String"
+								},
+								"loadSetItemId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_SQL_ELTFrameworkDB01",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_item": {
+						"type": "object"
+					},
+					"pl_param_destinationConfig": {
+						"type": "object"
+					},
+					"pl_param_pipelineId": {
+						"type": "string"
+					},
+					"pl_param_pipelineRunId": {
+						"type": "string"
+					},
+					"pl_param_loadConfig": {
+						"type": "object"
+					}
+				},
+				"variables": {
+					"selectStatement": {
+						"type": "String"
+					},
+					"maxDeltaValue": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/2 - Landing to Store"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-11-09T05:16:20Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ELTFrameworkDB01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_LND_TO_STORE_Synapse_Spark_SHOWCASE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "To put in looping of file for processing landing files...Notebook for landing needs to be amended as well. To talk to Barshan for handling.",
+				"activities": [
+					{
+						"name": "LandingToRaw",
+						"type": "SynapseNotebook",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "ReadFromLanding",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"source_storage": {
+									"value": "vndatapltfv2devst02",
+									"type": "string"
+								},
+								"source_container": {
+									"value": "landing",
+									"type": "string"
+								},
+								"source_path": {
+									"value": "demodata/demo_aemo",
+									"type": "string"
+								},
+								"source_file": {
+									"value": "demodata2.xml",
+									"type": "string"
+								},
+								"destination_storage": {
+									"value": "vndatapltfv2devst02",
+									"type": "string"
+								},
+								"destination_container": {
+									"value": "raw",
+									"type": "string"
+								},
+								"destination_path": {
+									"value": "aemo",
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "devsparkpool01",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Small",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Small",
+							"numExecutors": null
+						}
+					},
+					{
+						"name": "RawToConformance",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "LandingToRaw",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "ReadFromRaw",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"source_storage": {
+									"value": "vndatapltfv2devst02",
+									"type": "string"
+								},
+								"source_container": {
+									"value": "raw",
+									"type": "string"
+								},
+								"source_path": {
+									"value": "aemo",
+									"type": "string"
+								},
+								"source_file": {
+									"value": "",
+									"type": "string"
+								},
+								"destination_storage": {
+									"value": "vndatapltfv2devst02",
+									"type": "string"
+								},
+								"destination_container": {
+									"value": "conformance",
+									"type": "string"
+								},
+								"destination_path": {
+									"value": "aemo",
+									"type": "string"
+								}
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "devsparkpool01",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Small",
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"driverSize": "Small",
+							"numExecutors": null
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_item": {
+						"type": "object"
+					},
+					"pl_param_destinationConfig": {
+						"type": "object"
+					},
+					"pl_param_pipelineId": {
+						"type": "string"
+					},
+					"pl_param_pipelineRunId": {
+						"type": "string"
+					},
+					"pl_param_loadConfig": {
+						"type": "object"
+					}
+				},
+				"variables": {
+					"selectStatement": {
+						"type": "String"
+					},
+					"maxDeltaValue": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/2 - Landing to Store"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_Synapse_Analytics_Artifacts01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "AEMO_FileCopy",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "msats/retail/archive/"
+							},
+							{
+								"name": "Destination",
+								"value": "landing//"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureFileStorageReadSettings",
+									"recursive": true,
+									"deleteFilesAfterCompletion": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_AFS_DropZone_Generic",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_path": {
+										"value": "@pipeline().globalParameters.param_AEMO_path",
+										"type": "Expression"
+									},
+									"ds_param_archive_path": {
+										"value": "@pipeline().parameters.pl_param_archive_path",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"type": "Expression"
+									},
+									"ds_param_archive_path": {
+										"value": "@pipeline().parameters.pl_param_archive_path",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_archive_path": {
+						"type": "string",
+						"defaultValue": "2023/10-oct/02"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob_FileShare_Para')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "AEMO_FileCopy",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "msats/retail/archive/"
+							},
+							{
+								"name": "Destination",
+								"value": "landing//"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureFileStorageReadSettings",
+									"recursive": true,
+									"deleteFilesAfterCompletion": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_AFS_DropZone_Generic_FileShare_Para",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_path": {
+										"value": "@pipeline().globalParameters.param_AEMO_path",
+										"type": "Expression"
+									},
+									"ds_param_year": {
+										"value": "@pipeline().parameters.pl_param_year",
+										"type": "Expression"
+									},
+									"ds_param_month": {
+										"value": "@pipeline().parameters.pl_param_month",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic_FileShare_Para",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": "@pipeline().globalParameters.param_blb_storage_endpoint",
+									"ds_param_year": {
+										"value": "@pipeline().parameters.pl_param_year",
+										"type": "Expression"
+									},
+									"ds_param_month": {
+										"value": "@pipeline().parameters.pl_param_month",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_year": {
+						"type": "string"
+					},
+					"pl_param_month": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob_MSATS')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "AEMO_MSATS_FileCopy",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureFileStorageReadSettings",
+									"recursive": true
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_AFS_DropZone_Generic",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_path": {
+										"value": "@pipeline().globalParameters.param_AEMO_path",
+										"type": "Expression"
+									},
+									"ds_param_archive_path": {
+										"value": "@pipeline().parameters.pl_param_archive_Path",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic_MSATS",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"type": "Expression"
+									},
+									"ds_param_archive_path": {
+										"value": "@pipeline().parameters.pl_param_archive_Path",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_archive_path": {
+						"type": "string",
+						"defaultValue": "2023/10-oct/02"
+					}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/RetailUseCaseMSATS/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_SRC_TO_LND_AzureBlobSas')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "switchLoadPreProcessing",
+						"type": "Switch",
+						"dependsOn": [
+							{
+								"activity": "logWorkerStart",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"on": {
+								"value": "@toLower(pipeline().parameters.pl_param_item.LOAD_TYPE)",
+								"type": "Expression"
+							},
+							"cases": [
+								{
+									"value": "delta",
+									"activities": [
+										{
+											"name": "initialiseDeltaEntry",
+											"type": "SqlServerStoredProcedure",
+											"dependsOn": [],
+											"policy": {
+												"timeout": "7.00:00:00",
+												"retry": 0,
+												"retryIntervalInSeconds": 30,
+												"secureOutput": false,
+												"secureInput": false
+											},
+											"userProperties": [],
+											"typeProperties": {
+												"storedProcedureName": "[[CTL].[USP_DELTA_VALUE_ENTRY_INITIALISE]",
+												"storedProcedureParameters": {
+													"delta_column": {
+														"value": {
+															"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_COLUMN'),trim(pipeline().parameters.pl_param_item.DELTA_COLUMN),'')",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"delta_data_type": {
+														"value": {
+															"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_DATA_TYPE'),trim(pipeline().parameters.pl_param_item.DELTA_DATA_TYPE),'')",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"delta_type": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.DELTA_TYPE)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"source": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_NAME)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"target_schema": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.TARGET_SCHEMA)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"source_schema": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_SCHEMA)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"source_type": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_TYPE)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													}
+												}
+											},
+											"linkedServiceName": {
+												"referenceName": "LS_SQL_ELTFrameworkDB01",
+												"type": "LinkedServiceReference"
+											}
+										},
+										{
+											"name": "getDeltaFileModifiedDateTime",
+											"type": "Lookup",
+											"dependsOn": [
+												{
+													"activity": "initialiseDeltaEntry",
+													"dependencyConditions": [
+														"Succeeded"
+													]
+												}
+											],
+											"policy": {
+												"timeout": "7.00:00:00",
+												"retry": 0,
+												"retryIntervalInSeconds": 30,
+												"secureOutput": false,
+												"secureInput": false
+											},
+											"userProperties": [],
+											"typeProperties": {
+												"source": {
+													"type": "SqlServerSource",
+													"queryTimeout": "02:00:00",
+													"partitionOption": "None"
+												},
+												"dataset": {
+													"referenceName": "DS_SQL_SqlServer_GenericTable",
+													"type": "DatasetReference",
+													"parameters": {
+														"ds_param_tableSchema": {
+															"value": "@{pipeline().parameters.pl_param_item.SOURCE_SCHEMA}",
+															"type": "Expression"
+														},
+														"ds_param_tableName": {
+															"value": "@{pipeline().parameters.pl_param_item.SOURCE_NAME}",
+															"type": "Expression"
+														},
+														"ls_param_serverName": {
+															"value": "@pipeline().parameters.pl_param_sourceConfig.SERVER_NAME",
+															"type": "Expression"
+														},
+														"ls_param_databaseName": {
+															"value": "@pipeline().parameters.pl_param_sourceConfig.DATABASE_NAME",
+															"type": "Expression"
+														},
+														"ls_param_username": {
+															"value": "@pipeline().parameters.pl_param_sourceConfig.USERNAME",
+															"type": "Expression"
+														},
+														"ls_param_password_keyvault_secret": {
+															"value": "@pipeline().parameters.pl_param_sourceConfig.PASSWORD_KEYVAULT_SECRET",
+															"type": "Expression"
+														}
+													}
+												},
+												"firstRowOnly": true
+											}
+										},
+										{
+											"name": "setVarMaxDeltaValue",
+											"type": "SetVariable",
+											"dependsOn": [
+												{
+													"activity": "getDeltaFileModifiedDateTime",
+													"dependencyConditions": [
+														"Succeeded"
+													]
+												}
+											],
+											"policy": {
+												"secureOutput": false,
+												"secureInput": false
+											},
+											"userProperties": [],
+											"typeProperties": {
+												"variableName": "maxDeltaValue",
+												"value": {
+													"value": "@activity('getDeltaFileModifiedDateTime').output.firstRow.maxValue",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "switchLoadPostProcessing",
+						"type": "Switch",
+						"dependsOn": [
+							{
+								"activity": "Copy",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"on": {
+								"value": "@toLower(pipeline().parameters.pl_param_item.LOAD_TYPE)",
+								"type": "Expression"
+							},
+							"cases": [
+								{
+									"value": "delta",
+									"activities": [
+										{
+											"name": "updateDeltaValues",
+											"type": "SqlServerStoredProcedure",
+											"dependsOn": [],
+											"policy": {
+												"timeout": "7.00:00:00",
+												"retry": 0,
+												"retryIntervalInSeconds": 30,
+												"secureOutput": false,
+												"secureInput": false
+											},
+											"userProperties": [],
+											"typeProperties": {
+												"storedProcedureName": "[[CTL].[USP_DELTA_VALUE_ENTRY_UPDATE]",
+												"storedProcedureParameters": {
+													"delta_column": {
+														"value": {
+															"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_COLUMN'),trim(pipeline().parameters.pl_param_item.DELTA_COLUMN),'')",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"delta_data_type": {
+														"value": {
+															"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_DATA_TYPE'),trim(pipeline().parameters.pl_param_item.DELTA_DATA_TYPE),'')\n",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"delta_value": {
+														"value": {
+															"value": "@variables('maxDeltaValue')",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"source": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_NAME)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"target_schema": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.TARGET_SCHEMA)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"source_schema": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_SCHEMA)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"delta_type": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.DELTA_TYPE)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"source_type": {
+														"value": {
+															"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_TYPE)}",
+															"type": "Expression"
+														},
+														"type": "String"
+													}
+												}
+											},
+											"linkedServiceName": {
+												"referenceName": "LS_SQL_ELTFrameworkDB01",
+												"type": "LinkedServiceReference"
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "logWorkerStart",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[CTL].[USP_LOG_WORKER_RUNNING]",
+							"storedProcedureParameters": {
+								"callingPipelineId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_pipelineId",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"callingPipelineRunId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_pipelineRunId",
+										"type": "Expression"
+									},
+									"type": "Guid"
+								},
+								"workerName": {
+									"value": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"type": "String"
+								},
+								"workerRunId": {
+									"value": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "Guid"
+								},
+								"workerType": {
+									"value": "Ingest",
+									"type": "String"
+								},
+								"loadSetItemId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_SQL_ELTFrameworkDB01",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Copy",
+						"type": "Copy",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [
+							{
+								"activity": "switchLoadPreProcessing",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": {
+										"value": "@pipeline().parameters.pl_param_item.SOURCE_RECURSIVE_FILE_SCAN",
+										"type": "Expression"
+									},
+									"wildcardFolderPath": {
+										"value": "@pipeline().parameters.pl_param_item.SOURCE_SCHEMA",
+										"type": "Expression"
+									},
+									"wildcardFileName": {
+										"value": "@pipeline().parameters.pl_param_item.SOURCE_NAME",
+										"type": "Expression"
+									},
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"outputs": [
+							{
+								"referenceName": "DS_ABLB_DropZone_GenericJsonFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_folder": {
+										"value": "@{trim(pipeline().parameters.pl_param_loadConfig.LANDING_PATH)}",
+										"type": "Expression"
+									},
+									"ds_param_fileName": {
+										"value": "@{trim(toUpper(pipeline().parameters.pl_param_item.TARGET_TABLE))}__@{trim(pipeline().parameters.pl_param_item.LOAD_TYPE)}_@{pipeline().RunId}_@{formatDateTime(pipeline().TriggerTime,'yyyyMMdd_HHMMss')}",
+										"type": "Expression"
+									},
+									"ds_param_container": "landing",
+									"ds_param_endPoint": "https://vndatapltfv2devst01.blob.core.windows.net"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_item": {
+						"type": "object"
+					},
+					"pl_param_sourceConfig": {
+						"type": "object"
+					},
+					"pl_param_pipelineId": {
+						"type": "string"
+					},
+					"pl_param_pipelineRunId": {
+						"type": "string"
+					},
+					"pl_param_loadConfig": {
+						"type": "object"
+					}
+				},
+				"variables": {
+					"maxDeltaValue": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-11-09T05:16:20Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ELTFrameworkDB01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_LOG_PIPELINE')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "getPipelineDetails",
+						"type": "AzureFunctionActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"functionName": "GetPipelineSummary",
+							"body": {
+								"value": "{\n  \"runId\": \"@{pipeline().parameters.pl_param_pipelineRunId}\"\n}",
+								"type": "Expression"
+							},
+							"headers": {},
+							"method": "POST"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_AFUNC_DatalakeFramework",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "logPipelineCompletion",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "getPipelineDetails",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[CTL].[USP_LOG_PIPELINE_COMPLETE]",
+							"storedProcedureParameters": {
+								"pipelineId": {
+									"value": {
+										"value": "@pipeline().parameters.pl_param_pipelineId",
+										"type": "Expression"
+									},
+									"type": "Int32"
+								},
+								"status": {
+									"value": {
+										"value": "@activity('getPipelineDetails').output.response.status",
+										"type": "Expression"
+									},
+									"type": "String"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_SQL_ELTFrameworkDB01",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "postProcessingPerStatus",
+						"type": "Switch",
+						"dependsOn": [
+							{
+								"activity": "logPipelineCompletion",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"on": {
+								"value": "@toLower(activity('getPipelineDetails').output.response.status)",
+								"type": "Expression"
+							},
+							"cases": [
+								{
+									"value": "failed",
+									"activities": [
+										{
+											"name": "getErrorDetails",
+											"type": "AzureFunctionActivity",
+											"dependsOn": [],
+											"policy": {
+												"timeout": "7.00:00:00",
+												"retry": 0,
+												"retryIntervalInSeconds": 30,
+												"secureOutput": false,
+												"secureInput": false
+											},
+											"userProperties": [],
+											"typeProperties": {
+												"functionName": "GetPipelineErrorDetail",
+												"body": {
+													"value": "{\n  \"runId\": \"@{pipeline().parameters.pl_param_pipelineRunId}\"\n}",
+													"type": "Expression"
+												},
+												"headers": {},
+												"method": "POST"
+											},
+											"linkedServiceName": {
+												"referenceName": "LS_AFUNC_DatalakeFramework",
+												"type": "LinkedServiceReference"
+											}
+										},
+										{
+											"name": "logErrorDetails",
+											"type": "SqlServerStoredProcedure",
+											"dependsOn": [
+												{
+													"activity": "getErrorDetails",
+													"dependencyConditions": [
+														"Succeeded"
+													]
+												}
+											],
+											"policy": {
+												"timeout": "7.00:00:00",
+												"retry": 0,
+												"retryIntervalInSeconds": 30,
+												"secureOutput": false,
+												"secureInput": false
+											},
+											"userProperties": [],
+											"typeProperties": {
+												"storedProcedureName": "[[CTL].[USP_LOG_ERROR]",
+												"storedProcedureParameters": {
+													"errorDetail": {
+														"value": {
+															"value": "@string(activity('getErrorDetails').output.response)",
+															"type": "Expression"
+														},
+														"type": "String"
+													},
+													"pipelineID": {
+														"value": {
+															"value": "@pipeline().parameters.pl_param_pipelineId",
+															"type": "Expression"
+														},
+														"type": "Int32"
+													},
+													"pipelineRunId": {
+														"value": {
+															"value": "@activity('getPipelineDetails').output.response.invokedByRunId",
+															"type": "Expression"
+														},
+														"type": "Guid"
+													}
+												}
+											},
+											"linkedServiceName": {
+												"referenceName": "LS_SQL_ELTFrameworkDB01",
+												"type": "LinkedServiceReference"
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_pipelineId": {
+						"type": "int"
+					},
+					"pl_param_pipelineRunId": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/Utility"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-11-09T05:16:19Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ELTFrameworkDB01')]"
+			]
+		}
+	]
+}

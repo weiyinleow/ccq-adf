@@ -1,0 +1,134 @@
+{
+	"param_dl_storage_endpoint": {
+		"type": "string",
+		"value": "https://cqldevdatahubsynapse.dfs.core.windows.net"
+	},
+	"param_blb_storage_endpoint": {
+		"type": "string",
+		"value": "https://cqldevdatahubdata.dfs.core.windows.net"
+	},
+	"param_dz_storage_endpoint": {
+		"type": "string",
+		"value": "https://cqldevdatahubdata.dfs.core.windows.net"
+	},
+	"param_ResourceGroup": {
+		"type": "string",
+		"value": "CQL-AZUR1-DEVDATAHUB01-RG"
+	},
+	"param_SubscriptionID": {
+		"type": "string",
+		"value": "2e9f823e-dc76-4e8e-b815-c8a4f22d05ff"
+	},
+	"param_synapse_WorkspaceName": {
+		"type": "string",
+		"value": "cql-dev-datahub-synapse01"
+	},
+	"param_synapse_SQLPoolName": {
+		"type": "string",
+		"value": "cqldevdatahubdsql01"
+	},
+	"param_SharePoint_Name": {
+		"type": "string",
+		"value": "NP_SPM_Name"
+	},
+	"param_SharePoint_Category": {
+		"type": "string",
+		"value": "NP_SPM_Categor"
+	},
+	"param_SharePoint_RawFixedCost": {
+		"type": "string",
+		"value": "NP_SPM_RawFixedCost"
+	},
+	"param_SharePoint_LacimaRiskFactor": {
+		"type": "string",
+		"value": "NP_SPM_LacimaRiskFactor"
+	},
+	"param_synapse_endpoint": {
+		"type": "string",
+		"value": "https://cql-dev-datahub-synapse01.dev.azuresynapse.net"
+	},
+	"param_synapse_workspaceid": {
+		"type": "string",
+		"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+	},
+	"param_synapse_servername": {
+		"type": "string",
+		"value": "cql-dev-datahub-synapse01.sql.azuresynapse.net"
+	},
+	"param_AEMO_path": {
+		"type": "string",
+		"value": "msats/retail/archive"
+	},
+	"param_keyvault_secrets_endpoint": {
+		"type": "string",
+		"value": "https://cql-dev-datahub-key.vault.azure.net/secrets/"
+	},
+	"param_piwebapi_serverurl": {
+		"type": "string",
+		"value": "https://pivis.dev.cleancoqld.com.au/piwebapi/"
+	},
+	"param_document_ai_endpoint": {
+		"type": "string",
+		"value": "https://cql-dev-datahub-documentintelligence01.cognitiveservices.azure.com/"
+	},
+	"param_synapse_key_vault_linked_service_name": {
+		"type": "string",
+		"value": "LS_AKV_AA_KV01"
+	},
+	"param_key_vault_name": {
+		"type": "string",
+		"value": "cql-dev-datahub-key"
+	},
+	"param_document_ai_key_secret_name": {
+		"type": "string",
+		"value": "cleanco-azure-ai-services-api-key"
+	},
+	"param_blb_storage_account": {
+		"type": "string",
+		"value": "cqldevdatahubdata"
+	},
+	"param_synapse_sql_linked_service_name": {
+		"type": "string",
+		"value": "LS_SQL_ELTFrameworkDB"
+	},
+	"param_dl_storage_account": {
+		"type": "string",
+		"value": "cqldevdatahubsynapse"
+	},
+	"param_piwebapi_path": {
+		"type": "string",
+		"value": "\\\\\\\\CQL-DEV1-PCOL01\\\\"
+	},
+	"param_SharePoint_ReferenceData": {
+		"type": "string",
+		"value": "NP_ReferenceData"
+	},
+	"param_SharePoint_FuelCard_Facility_Map": {
+		"type": "string",
+		"value": "NP_FuelCard_Facility_Map"
+	},
+	"param_sharepoint_baseurl": {
+		"type": "string",
+		"value": "https://cleancoqueensland.sharepoint.com/sites/app-DataHub/_api/web/GetFileByServerRelativeUrl('/sites/app-DataHub/NP/"
+	},
+	"param_SharePoint_SF6_Emissions": {
+		"type": "string",
+		"value": "NP_SF6_Emissions"
+	},
+	"param_SharePoint_Coregas_Supplier_Transactions": {
+		"type": "string",
+		"value": "NP_Coregas_Supplier_Transactions"
+	},
+	"param_SharePoint_DUID_Connection_Point_Mapping": {
+		"type": "string",
+		"value": "NP_DUID_Connection_Point_Mapping"
+	},
+	"param_SharePoint_DistributionLossFactors": {
+		"type": "string",
+		"value": "NP_AEMO_DistributionLossFactors"
+	},
+	"param_lacimawebapi_serverurl": {
+		"type": "string",
+		"value": "https://lacima-api"
+	}
+}

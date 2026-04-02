@@ -1,0 +1,240 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "cql-dev-datahub-factory04"
+		},
+		"LS_ADB_Int01_accessToken": {
+			"value": ""
+		},
+		"LS_SQL_AzureSqlDatabase_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName}"
+		},
+		"LS_SQL_ELTFrameworkDB01_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=cql-dev-datahub-sql.database.windows.net;Initial Catalog=data-platform-framework-controldb"
+		},
+		"LS_SQL_OnPremiseSources_connectionString": {
+			"value": "Integrated Security=False;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName};User ID=@{linkedService().ls_param_username}"
+		},
+		"LS_SQL_SqlServer_connectionString": {
+			"value": "Integrated Security=False;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName};User ID=@{linkedService().ls_param_username}"
+		},
+		"LS_SQL_Synapse01_connectionString": {
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName}"
+		},
+		"DS_CFG_ADLS_GenericConfigFile_properties_typeProperties_fileName": {
+			"value": "@{dataset().ds_param_ConfigFileName}"
+		},
+		"DS_CFG_ADLS_GenericConfigFile_properties_typeProperties_folderPath": {
+			"value": "@{dataset().ds_param_ConfigFilePath}"
+		},
+		"LS_ABLB_Generic_properties_typeProperties_serviceEndpoint": {
+			"value": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_ABLB_Landing_properties_typeProperties_serviceEndpoint": {
+			"value": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_ADB_Int01_properties_typeProperties_existingClusterId": {
+			"value": "@linkedService().ls_param_clusterId"
+		},
+		"LS_ADLS2_Config_properties_typeProperties_url": {
+			"value": "https://cqldevdatahubsynapse.dfs.core.windows.net"
+		},
+		"LS_ADLS2_DataLake_properties_typeProperties_url": {
+			"value": "https://cqldevdatahubsynapse.dfs.core.windows.net/"
+		},
+		"LS_ADLS2_Generic_properties_typeProperties_url": {
+			"value": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_ADLS2_Landing_properties_typeProperties_url": {
+			"value": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_ADLS2_Landing_properties_typeProperties_serviceEndpoint": {
+			"value": "https://mmgaeaaastr01e3.dfs.core.windows.net/"
+		},
+		"LS_ADX_GenericCluster_properties_typeProperties_endpoint": {
+			"value": "https://vndatapltfdevadx.australiaeast.kusto.windows.net"
+		},
+		"LS_ADX_GenericCluster_properties_typeProperties_database": {
+			"value": "adxdemo"
+		},
+		"LS_AFUNC_DatalakeExtractors_properties_typeProperties_functionAppUrl": {
+			"value": "https://vn-datapltfv2-dev-func-extractors.azurewebsites.net"
+		},
+		"LS_AFUNC_DatalakeFramework_properties_typeProperties_functionAppUrl": {
+			"value": "https://vn-datapltfv2-dev-func-utility.azurewebsites.net"
+		},
+		"LS_AFUNC_Notifications_properties_typeProperties_functionAppUrl": {
+			"value": "https://cqldevdatahub-core-framework.azurewebsites.net"
+		},
+		"LS_AKV_AA_KV01_properties_typeProperties_baseUrl": {
+			"value": "https://cql-dev-datahub-key.vault.azure.net/"
+		},
+		"LS_BOM_FTP_properties_typeProperties_host": {
+			"value": "ftp.bom.gov.au"
+		},
+		"LS_BOM_FTP_properties_typeProperties_userName": {
+			"value": "bom1312"
+		},
+		"LS_BOM_SFTP_properties_typeProperties_host": {
+			"value": "sftp-reg.cloud.bom.gov.au"
+		},
+		"LS_BOM_SFTP_properties_typeProperties_userName": {
+			"value": "bom1312"
+		},
+		"LS_REST_PIWebAPI_properties_typeProperties_url": {
+			"value": "@{linkedService().ls_param_base_url}"
+		},
+		"LS_REST_PIWebAPI_properties_typeProperties_userName": {
+			"value": "@{linkedService().ls_param_adfserviceacct_username}"
+		},
+		"LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_server": {
+			"value": "cql-prd-shared.database.windows.net"
+		},
+		"LS_SQL_AzureSqlDatabase_CPRS_properties_typeProperties_database": {
+			"value": "CPRS"
+		},
+		"LS_SharePoint_List01_properties_typeProperties_servicePrincipalId": {
+			"value": "dfb31466-fdbf-4d64-9d83-f1cad12b25e1"
+		},
+		"LS_Sharepoint_Folder_properties_typeProperties_url": {
+			"value": "@{linkedService().param_sharepoint_baseURL}"
+		},
+		"LS_Synapse_Analytics_Artifacts01_properties_typeProperties_endpoint": {
+			"value": "@{linkedService().ls_param_endpoint}"
+		},
+		"LS_TradingOps_FS_sasUri": {
+			"value": ""
+		},
+		"LS_TradingOps_FS_properties_typeProperties_sasToken_secretName": {
+			"value": "cleanco-aemo-msats-archive-sas-token"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pSftpDirectory": {
+			"value": "/register/bom1312/fwo"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pDatasetName": {
+			"value": "obs_10min"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pSftpDropzoneRoot": {
+			"value": "bom/obs_10min/sftp"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pLandingRoot": {
+			"value": "bom/obs_10min"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pFileName": {
+			"value": "IDQ60920.xml"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pftpDirectory": {
+			"value": "fwo"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pftpDropzoneRoot": {
+			"value": "bom/obs_10min/ftp"
+		},
+		"TR_Every_10Min_properties_PL_BOM_Obs_parameters_pBronzeRoot": {
+			"value": "bom/obs_10min"
+		},
+		"Weekend_CurrentMonth_Run_properties_RetailUseCase_parameters_mpl_param_archive_Path": {
+			"value": "@toLower(formatDateTime(utcNow(), 'yyyy/MM-MMM'))"
+		},
+		"Weekend_PreviousMonth_Run_properties_RetailUseCase_parameters_mpl_param_archive_Path": {
+			"value": "@toLower(formatDateTime(addToTime(utcNow(), -1, 'Month'), 'yyyy/MM-MMM'))"
+		},
+		"Purview-DataFactory-PE_properties_privateLinkResourceId": {
+			"value": "/subscriptions/e7a5cadd-075a-4f64-a30b-b83175afd0aa/resourceGroups/CQL-AZUR1-PRODDATAHUB01-RG/providers/Microsoft.Purview/accounts/CQL-PROD-DATAHUB-PURVIEW"
+		},
+		"Purview-DataFactory-PE_properties_groupId": {
+			"value": "account"
+		},
+		"Purview-DataFactory-PE_blob_properties_privateLinkResourceId": {
+			"value": "/subscriptions/ef36d528-531d-4e40-9231-12300b0cc406/resourceGroups/ingestion-storage-rg-australiaeast-5/providers/Microsoft.Storage/storageAccounts/ingestionaegdsmova"
+		},
+		"Purview-DataFactory-PE_blob_properties_groupId": {
+			"value": "blob"
+		},
+		"Purview-DataFactory-PE_queue_properties_privateLinkResourceId": {
+			"value": "/subscriptions/ef36d528-531d-4e40-9231-12300b0cc406/resourceGroups/ingestion-storage-rg-australiaeast-5/providers/Microsoft.Storage/storageAccounts/ingestionaegdsmova"
+		},
+		"Purview-DataFactory-PE_queue_properties_groupId": {
+			"value": "queue"
+		},
+		"cqldatahub-core-framework-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Web/sites/cqldevdatahub-core-framework"
+		},
+		"cqldatahub-core-framework-endpoint_properties_groupId": {
+			"value": "sites"
+		},
+		"cqldatahubdata01-blob-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubdata"
+		},
+		"cqldatahubdata01-blob-datafactory01-endpoint_properties_groupId": {
+			"value": "blob"
+		},
+		"cqldatahubdata01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubdata"
+		},
+		"cqldatahubdata01-datafactory01-endpoint_properties_groupId": {
+			"value": "dfs"
+		},
+		"cqldatahubkey01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.KeyVault/vaults/cql-dev-datahub-key"
+		},
+		"cqldatahubkey01-datafactory01-endpoint_properties_groupId": {
+			"value": "vault"
+		},
+		"cqldatahublogs01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahublogs"
+		},
+		"cqldatahublogs01-datafactory01-endpoint_properties_groupId": {
+			"value": "dfs"
+		},
+		"cqldatahubsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Sql/servers/cql-dev-datahub-sql"
+		},
+		"cqldatahubsql01-datafactory01-endpoint_properties_groupId": {
+			"value": "sqlServer"
+		},
+		"cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_groupId": {
+			"value": "dev"
+		},
+		"cqldatahubsynapse01-blob-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubsynapse"
+		},
+		"cqldatahubsynapse01-blob-datafactory01-endpoint_properties_groupId": {
+			"value": "blob"
+		},
+		"cqldatahubsynapse01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubsynapse"
+		},
+		"cqldatahubsynapse01-datafactory01-endpoint_properties_groupId": {
+			"value": "dfs"
+		},
+		"cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_groupId": {
+			"value": "sqlOnDemand"
+		},
+		"cqldatahubsynapse01-sql-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-sql-datafactory01-endpoint_properties_groupId": {
+			"value": "sql"
+		},
+		"cqlsharedsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/f954f177-4db6-46db-9a99-2bf59d22c1fa/resourceGroups/CQL-AZUR1-PRODSHARED01-DB-RG/providers/Microsoft.Sql/servers/cql-prd-shared"
+		},
+		"cqlsharedsql01-datafactory01-endpoint_properties_groupId": {
+			"value": "sqlServer"
+		},
+		"cqlsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"value": "/subscriptions/52427805-cf5b-4ce1-beb7-1005dfb46a64/resourceGroups/CQL-AZUR1-NONPRODDEV01-RG/providers/Microsoft.Sql/servers/cql-dev"
+		},
+		"cqlsql01-datafactory01-endpoint_properties_groupId": {
+			"value": "sqlServer"
+		}
+	}
+}

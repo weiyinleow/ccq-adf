@@ -1,0 +1,1306 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "cql-dev-datahub-factory04"
+		},
+		"cqldatahub-core-framework-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Web/sites/cqldevdatahub-core-framework"
+		},
+		"cqldatahub-core-framework-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sites"
+		},
+		"cqldatahubdata01-blob-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubdata"
+		},
+		"cqldatahubdata01-blob-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "blob"
+		},
+		"cqldatahubdata01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubdata"
+		},
+		"cqldatahubdata01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dfs"
+		},
+		"cqldatahubkey01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.KeyVault/vaults/cql-dev-datahub-key"
+		},
+		"cqldatahubkey01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "vault"
+		},
+		"cqldatahublogs01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahublogs"
+		},
+		"cqldatahublogs01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dfs"
+		},
+		"cqldatahubsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Sql/servers/cql-dev-datahub-sql"
+		},
+		"cqldatahubsql01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sqlServer"
+		},
+		"cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dev"
+		},
+		"cqldatahubsynapse01-blob-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubsynapse"
+		},
+		"cqldatahubsynapse01-blob-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "blob"
+		},
+		"cqldatahubsynapse01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Storage/storageAccounts/cqldevdatahubsynapse"
+		},
+		"cqldatahubsynapse01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "dfs"
+		},
+		"cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sqlOnDemand"
+		},
+		"cqldatahubsynapse01-sql-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+		},
+		"cqldatahubsynapse01-sql-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sql"
+		},
+		"cqlsharedsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/f954f177-4db6-46db-9a99-2bf59d22c1fa/resourceGroups/CQL-AZUR1-PRODSHARED01-DB-RG/providers/Microsoft.Sql/servers/cql-prd-shared"
+		},
+		"cqlsharedsql01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sqlServer"
+		},
+		"cqlsql01-datafactory01-endpoint_properties_privateLinkResourceId": {
+			"type": "string",
+			"defaultValue": "/subscriptions/52427805-cf5b-4ce1-beb7-1005dfb46a64/resourceGroups/CQL-AZUR1-NONPRODDEV01-RG/providers/Microsoft.Sql/servers/cql-dev"
+		},
+		"cqlsql01-datafactory01-endpoint_properties_groupId": {
+			"type": "string",
+			"defaultValue": "sqlServer"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahub-core-framework-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahub-core-framework-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahub-core-framework-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubdata01-blob-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubdata01-blob-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubdata01-blob-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubdata01-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubdata01-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubdata01-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubkey01-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubkey01-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubkey01-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahublogs01-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahublogs01-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahublogs01-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubsql01-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubsql01-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubsql01-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubsynapse01-artifacts-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubsynapse01-artifacts-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubsynapse01-blob-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubsynapse01-blob-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubsynapse01-blob-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubsynapse01-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubsynapse01-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubsynapse01-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubsynapse01-serverless-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubsynapse01-serverless-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqldatahubsynapse01-sql-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqldatahubsynapse01-sql-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqldatahubsynapse01-sql-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqlsharedsql01-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqlsharedsql01-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqlsharedsql01-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/default/cqlsql01-datafactory01-endpoint')]",
+			"type": "Microsoft.DataFactory/factories/managedVirtualNetworks/managedPrivateEndpoints",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"privateLinkResourceId": "[parameters('cqlsql01-datafactory01-endpoint_properties_privateLinkResourceId')]",
+				"groupId": "[parameters('cqlsql01-datafactory01-endpoint_properties_groupId')]"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AEMO_NEMDE_SRC_TO_DZ_AzureBlob_unzip')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "AEMO_NEMDE_FileCopy_unzip",
+						"description": "NEMDE files unzip",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings",
+									"compressionProperties": {
+										"type": "ZipDeflateReadSettings"
+									}
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic_source_NEMDE",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+										"type": "Expression"
+									},
+									"ds_param_folder": "drop-zone",
+									"ds_param_path": "AEMO_NEMDE_zip"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic_destination_NEMDE",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+										"type": "Expression"
+									},
+									"ds_param_folder": "drop-zone",
+									"ds_param_path": "AEMO_NEMDE_SourceCopy"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/AEMONEMDE/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AEMO_NEMDE_XMLtoParquet')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get_raw_folder_metadata",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_SRC_ADSL_AEMO_NEMDE_Metadata",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_container": "raw",
+									"ds_param_folder": "AEMO/NEMDE"
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							}
+						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get_raw_folder_metadata",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get_raw_folder_metadata').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "AEMO_NEMDE_XML_Parquet",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "XmlSource",
+											"additionalColumns": [
+												{
+													"name": "FileName",
+													"value": {
+														"value": "@item().name",
+														"type": "Expression"
+													}
+												}
+											],
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "XmlReadSettings",
+												"validationMode": "none",
+												"namespaces": true
+											}
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings",
+												"copyBehavior": "MergeFiles"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"path": "[['@PeriodID']"
+													},
+													"sink": {
+														"name": "PeriodID",
+														"type": "DateTime"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@RegionID']"
+													},
+													"sink": {
+														"name": "RegionID",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@Market']"
+													},
+													"sink": {
+														"name": "Market",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@Price']"
+													},
+													"sink": {
+														"name": "Price",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@Unit']"
+													},
+													"sink": {
+														"name": "Unit",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@DispatchedMarket']"
+													},
+													"sink": {
+														"name": "DispatchedMarket",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@BandNo']"
+													},
+													"sink": {
+														"name": "BandNo",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@Increase']"
+													},
+													"sink": {
+														"name": "Increase",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@RRNBandPrice']"
+													},
+													"sink": {
+														"name": "RRNBandPrice",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "[['@BandCost']"
+													},
+													"sink": {
+														"name": "BandCost",
+														"type": "String"
+													}
+												},
+												{
+													"source": {
+														"path": "$['FileName']"
+													},
+													"sink": {
+														"name": "FileName",
+														"type": "String"
+													}
+												}
+											],
+											"collectionReference": "$['NEMSPDCaseFile']['SolutionAnalysis']['PriceSetting']",
+											"mapComplexValuesToString": false
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "DS_SRC_ADSL_AEMO_NEMDE_XmlFile",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_param_container": "raw",
+												"ds_param_folder": "AEMO/NEMDE",
+												"ds_param_filename": {
+													"value": "@item().name",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DS_SNK_ADSL_AEMO_NEMDE_ParquetFile",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_param_container": "raw",
+												"ds_param_folder": "AEMO/NEMDE_Parquet/nemde_price_setting"
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/AEMONEMDE/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AVEVA_PI_Archive')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Pipeline will copy files from landing to timestamped archived folder (.zip) then delete files in landing.",
+				"activities": [
+					{
+						"name": "Get files in landing for archiving",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_SRC_ADLS_JSON_LND",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"type": "Expression"
+									},
+									"ds_param_folder": {
+										"value": "@pipeline().parameters.pl_param_folder",
+										"type": "Expression"
+									},
+									"ds_param_fileSystem": {
+										"value": "landing",
+										"type": "Expression"
+									}
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobFSReadSettings",
+								"recursive": true,
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "JsonReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEach File",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Set variable FolderTimeString",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get files in landing for archiving').output.childItems",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "AVEVA PI Landing to Archive",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Set variable - FileName",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "JsonSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": false,
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "JsonReadSettings"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "DS_SNK_ADLS_GenericJsonFile",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_param_endPoint": {
+													"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+													"type": "Expression"
+												},
+												"ds_param_folder": {
+													"value": "@pipeline().parameters.pl_param_folder",
+													"type": "Expression"
+												},
+												"ds_param_fileName": {
+													"value": "@variables('vFileName')",
+													"type": "Expression"
+												},
+												"ds_param_fileSystem": "landing"
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "DS_SNK_ADLS_JSON_ARCH",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_param_endPoint": {
+													"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+													"type": "Expression"
+												},
+												"ds_param_folder": {
+													"value": "@concat(pipeline().parameters.pl_param_folder,'/',\nvariables('vFolderTimeString')\n)",
+													"type": "Expression"
+												},
+												"ds_param_fileName": {
+													"value": "@replace(variables('vFileName'),'.json','.zip')",
+													"type": "Expression"
+												},
+												"ds_param_fileSystem": "archive"
+											}
+										}
+									]
+								},
+								{
+									"name": "Set variable - FileName",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "vFileName",
+										"value": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Delete File in Landing",
+									"type": "Delete",
+									"dependsOn": [
+										{
+											"activity": "AVEVA PI Landing to Archive",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "DS_SNK_ADLS_GenericJsonFile",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_param_endPoint": {
+													"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+													"type": "Expression"
+												},
+												"ds_param_folder": {
+													"value": "@pipeline().parameters.pl_param_folder",
+													"type": "Expression"
+												},
+												"ds_param_fileName": {
+													"value": "@variables('vFileName')",
+													"type": "Expression"
+												},
+												"ds_param_fileSystem": "landing"
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobFSReadSettings",
+											"recursive": false,
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Set variable FolderTimeString",
+						"description": "Creates a folder path based on UTC time to be shared by all files being archived.",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get files in landing for archiving",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "vFolderTimeString",
+							"value": {
+								"value": "@concat(\nformatDateTime(utcNow(),'yyyy'),'/',\nformatDateTime(utcNow(),'MM'),'/',\nformatDateTime(utcNow(),'dd'),'/',\nformatDateTime(utcNow(),'mm'),'/',\nformatDateTime(utcNow(),'ss'),'/'\n)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_folder": {
+						"type": "string",
+						"defaultValue": "aveva_pi/streams_recorded"
+					}
+				},
+				"variables": {
+					"vFileName": {
+						"type": "String"
+					},
+					"vFolderTimeString": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/SustainabilityUseCase/AVEVA_PI"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Iterate_File_Metadata')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Basis for Delta Based File Copy. To port over in the PL_INGEST_WORKER_SRC_TO_LND_AzureBlob pipeline and SAS",
+				"activities": [
+					{
+						"name": "Get List of Files",
+						"type": "GetMetadata",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "DS_ABLB_DropZone_GenericFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_folder": "aemo",
+									"ds_param_fileName": "*.xml",
+									"ds_param_container": "drop-zone",
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"type": "Expression"
+									}
+								}
+							},
+							"fieldList": [
+								"childItems"
+							],
+							"storeSettings": {
+								"type": "AzureBlobStorageReadSettings",
+								"recursive": true,
+								"modifiedDatetimeStart": {
+									"value": "@convertToUtc(variables('varReferenceDateTime'),'AUS Eastern Standard Time')",
+									"type": "Expression"
+								},
+								"modifiedDatetimeEnd": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								},
+								"enablePartitionDiscovery": false
+							},
+							"formatSettings": {
+								"type": "BinaryReadSettings"
+							}
+						}
+					},
+					{
+						"name": "ForEach File",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Set List Var",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@variables('varFileMetadata')",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Get Last Modified Date",
+									"type": "GetMetadata",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "DS_ABLB_DropZone_GenericFile",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_param_folder": "aemo",
+												"ds_param_fileName": {
+													"value": "@item().name",
+													"type": "Expression"
+												},
+												"ds_param_container": "drop-zone",
+												"ds_param_endPoint": "https://vndatapltfv2devst01.blob.core.windows.net"
+											}
+										},
+										"fieldList": [
+											"lastModified",
+											"itemName"
+										],
+										"storeSettings": {
+											"type": "AzureBlobStorageReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										},
+										"formatSettings": {
+											"type": "BinaryReadSettings"
+										}
+									}
+								},
+								{
+									"name": "If FileDate Greater Than Limit",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "Get Last Modified Date",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@greater(\r\n    ticks(activity('Get Last Modified Date').output.lastModified), \r\n    ticks(variables('varReferenceDateTime'))\r\n    )",
+											"type": "Expression"
+										},
+										"ifTrueActivities": [
+											{
+												"name": "Set File Last Modified Date",
+												"type": "SetVariable",
+												"dependsOn": [],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "varReferenceDateTime",
+													"value": {
+														"value": "@activity('Get Last Modified Date').output.lastModified",
+														"type": "Expression"
+													}
+												}
+											},
+											{
+												"name": "Set File Name",
+												"type": "SetVariable",
+												"dependsOn": [
+													{
+														"activity": "Set File Last Modified Date",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"variableName": "varLatestFileName",
+													"value": {
+														"value": "@activity('Get Last Modified Date').output.itemName",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Set List Var",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get List of Files",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "varFileMetadata",
+							"value": {
+								"value": "@activity('Get List of Files').output.childItems",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"varFileMetadata": {
+						"type": "Array"
+					},
+					"varReferenceDateTime": {
+						"type": "String",
+						"defaultValue": "2024-02-23 00:00:00"
+					},
+					"varLatestFileName": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_ALERT_SEND_EMAILS')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "forEachEmailAlert",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.pl_param_emailAlerts",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "sendEmail",
+									"type": "AzureFunctionActivity",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"functionName": "SendEmailViaSendGrid",
+										"body": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"headers": {},
+										"method": "POST"
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_AFUNC_DatalakeFramework",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_emailAlerts": {
+						"type": "array"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/Utility"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-11-09T05:16:19Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_LND_TO_STORE_AzureBlob')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy XML data AEMO",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"deleteFilesAfterCompletion": true
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_ABLB_DropZone_GenericFolder",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_folder": "AEMO/NEM12_temp",
+									"ds_param_container": "landing",
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_ADLS_GenericFolder",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_dl_storage_endpoint",
+										"type": "Expression"
+									},
+									"ds_param_folder": "AEMO/NEM12_temp",
+									"ds_param_fileSystem": "raw"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/2 - Landing to Store"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob_unzip')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "AEMO_FileCopy_unzip",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [
+							{
+								"name": "Source",
+								"value": "msats/retail/archive/"
+							},
+							{
+								"name": "Destination",
+								"value": "landing//"
+							}
+						],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"deleteFilesAfterCompletion": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings",
+									"compressionProperties": {
+										"type": "ZipDeflateReadSettings"
+									}
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "PreserveHierarchy"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic_source",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_Filesystem_ADSL_Generic_destination",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_endPoint": {
+										"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		}
+	]
+}

@@ -1,0 +1,5258 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "cql-dev-datahub-factory04"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_SEND_NOTIFICATION')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "PL_SEND_NOTIFICATION",
+						"type": "AzureFunctionActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"functionName": "SendTeamsNotification",
+							"body": {
+								"value": "{\n    \"ChannelKeys\": [\"@{pipeline().parameters.pl_param_NotificationChannel}\"],\n    \"Title\": \"@{pipeline().parameters.pl_param_MartName}\",\n    \"SeverityLevel\": \"@{pipeline().parameters.pl_param_SeverityLevel}\",\n    \"Subtitle\": \"Load Failure @{pipeline().parameters.pl_param_MartName}\",\n    \"BodyText\":\"The Datalake ingestion of @{pipeline().parameters.pl_param_MartName} has failed.\",\n    \"Facts\": {\n        \"Pipeline Name\":\"@{pipeline().Pipeline}\",\n        \"Pipeline ID\":\"@{pipeline().RunId}\",\n        \"Start Time (UTC)\":\"@{formatDateTime(pipeline().TriggerTime,'yyyy-MM-dd HH:MM:ss')}\",\n        \"Start Time (AEDT)\":\"@{convertFromUtc(pipeline().TriggerTime,'AUS Eastern Standard Time','yyyy-MM-dd HH:MM:ss')}\"\n    }\n}",
+								"type": "Expression"
+							},
+							"headers": {},
+							"method": "POST"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_AFUNC_Notifications",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_NotificationChannel": {
+						"type": "string"
+					},
+					"pl_param_MartName": {
+						"type": "string"
+					},
+					"pl_param_SeverityLevel": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/Utility"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_TEAMS_NOTIF_ON_FAIL')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "PL_SEND_NOTIFICATION",
+						"type": "AzureFunctionActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"functionName": "SendTeamsNotification",
+							"body": {
+								"value": "{\n\t\"ChannelKeys\": [\"@{pipeline().parameters.pl_param_NotificationChannel}\"],\n\t\"Title\": \"Pipeline Failure\",\t\n\t\"Subtitle\": \"Pipeline Run Failed -  @{pipeline().parameters.pl_param_MartName}\",\n\t\"BodyText\":\"The @{pipeline().parameters.pl_param_PipeLineName} has failed. Please check ADF logs for further details.\",\n\t\"Facts\": {\n\t\t\t\"Pipeline Name\":\"@{pipeline().parameters.pl_param_PipeLineName}\",\n\t\t\t\"Pipeline ID\":\"@{pipeline().parameters.pl_param_PipelineRunId}\",\n\t\t\t\"Failure Time (UTC)\":\"@{formatDateTime(utcnow())}\",\n\t\t\t\"Failure Time (AEST)\":\"@{convertTimeZone(utcnow() , 'UTC' , 'E. Australia Standard Time')}\"\n\t}\n}",
+								"type": "Expression"
+							},
+							"headers": {},
+							"method": "POST"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_AFUNC_Notifications",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_NotificationChannel": {
+						"type": "string",
+						"defaultValue": "DataHubFailures"
+					},
+					"pl_param_MartName": {
+						"type": "string",
+						"defaultValue": "TestPipeline"
+					},
+					"pl_param_PipelineRunId": {
+						"type": "string",
+						"defaultValue": "3247923"
+					},
+					"pl_param_PipeLineName": {
+						"type": "string",
+						"defaultValue": "TestPipeline"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/Utility/Teams Alerts"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_TEAMS_NOTIF_ON_START')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "PL_SEND_NOTIFICATION",
+						"type": "AzureFunctionActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"functionName": "SendTeamsNotification",
+							"body": {
+								"value": "{\n\t\"ChannelKeys\": [\"@{pipeline().parameters.pl_param_NotificationChannel}\"],\n\t\"Title\": \"Pipeline Triggered\",\t\n\t\"Subtitle\": \"Pipeline Triggered -  @{pipeline().parameters.pl_param_MartName}\",\n\t\"BodyText\":\"The @{pipeline().parameters.pl_param_PipeLineName} has started.\",\n\t\"Facts\": {\n\t\t\t\"Pipeline Name\":\"@{pipeline().parameters.pl_param_PipeLineName}\",\n\t\t\t\"Pipeline ID\":\"@{pipeline().parameters.pl_param_PipelineRunId}\",\n\t\t\t\"Start Time (UTC)\":\"@{formatDateTime(utcnow())}\",\n\t\t\t\"Start Time (AEST)\":\"@{convertTimeZone(utcnow() , 'UTC' , 'E. Australia Standard Time')}\"\n\t}\n}",
+								"type": "Expression"
+							},
+							"headers": {},
+							"method": "POST"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_AFUNC_Notifications",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_NotificationChannel": {
+						"type": "string",
+						"defaultValue": "DataHubAlerts"
+					},
+					"pl_param_MartName": {
+						"type": "string",
+						"defaultValue": "TestPipeline"
+					},
+					"pl_param_PipelineRunId": {
+						"type": "string",
+						"defaultValue": "3247923"
+					},
+					"pl_param_PipeLineName": {
+						"type": "string",
+						"defaultValue": "TestPipeline"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/Utility/Teams Alerts"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_TEAMS_NOTIF_ON_SUCCESS')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "PL_SEND_NOTIFICATION",
+						"type": "AzureFunctionActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"functionName": "SendTeamsNotification",
+							"body": {
+								"value": "{\n\t\"ChannelKeys\": [\"@{pipeline().parameters.pl_param_NotificationChannel}\"],\n\t\"Title\": \"Pipeline Success!\",\t\n\t\"Subtitle\": \"Pipeline Run Succeeded -  @{pipeline().parameters.pl_param_MartName}\",\n\t\"BodyText\":\"The @{pipeline().parameters.pl_param_PipeLineName} has completed successfully. Please check ADF logs for further details.\",\n\t\"Facts\": {\n\t\t\t\"Pipeline Name\":\"@{pipeline().parameters.pl_param_PipeLineName}\",\n\t\t\t\"Pipeline ID\":\"@{pipeline().parameters.pl_param_PipelineRunId}\",\n\t\t\t\"Completetion Time (UTC)\":\"@{formatDateTime(utcnow())}\",\n\t\t\t\"Completion Time (AEST)\":\"@{convertTimeZone(utcnow() , 'UTC' , 'E. Australia Standard Time')}\"\n\t}\n}",
+								"type": "Expression"
+							},
+							"headers": {},
+							"method": "POST"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_AFUNC_Notifications",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_NotificationChannel": {
+						"type": "string",
+						"defaultValue": "DataHubAlerts"
+					},
+					"pl_param_MartName": {
+						"type": "string",
+						"defaultValue": "TestPipeline"
+					},
+					"pl_param_PipelineRunId": {
+						"type": "string",
+						"defaultValue": "3247923"
+					},
+					"pl_param_PipeLineName": {
+						"type": "string",
+						"defaultValue": "TestPipeline"
+					}
+				},
+				"folder": {
+					"name": "99 - Framework Components/Utility/Teams Alerts"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_BOM_FTP_File')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_BOM_FTP",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"pDirectory": {
+						"type": "string"
+					},
+					"pFileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "FtpServerLocation",
+						"fileName": {
+							"value": "@dataset().pFileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().pDirectory",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_CFG_SQL_CTL_TABLES')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB01",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "99 - Framework Components"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "CTL",
+					"table": "SHAREPOINT_FILE_DETAILS"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_CFG_SQL_DeltaValuesTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB01",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "99 - Framework Components"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "TABLE_NAME",
+						"type": "varchar"
+					},
+					{
+						"name": "TABLE_PATH",
+						"type": "varchar"
+					},
+					{
+						"name": "DELTA_COLUMN",
+						"type": "varchar"
+					},
+					{
+						"name": "DELTA_DATA_TYPE",
+						"type": "nvarchar"
+					},
+					{
+						"name": "DELTA_START_VALUE",
+						"type": "nvarchar"
+					},
+					{
+						"name": "DELTA_END_VALUE",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "EXEC_DELTA_VALUES"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SHAREPOINT_FILE_DETAILS_Table')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB01",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "99 - Framework Components"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "TABLE_NAME",
+						"type": "varchar"
+					},
+					{
+						"name": "TABLE_PATH",
+						"type": "varchar"
+					},
+					{
+						"name": "DELTA_COLUMN",
+						"type": "varchar"
+					},
+					{
+						"name": "DELTA_DATA_TYPE",
+						"type": "nvarchar"
+					},
+					{
+						"name": "DELTA_START_VALUE",
+						"type": "nvarchar"
+					},
+					{
+						"name": "DELTA_END_VALUE",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "CTL",
+					"table": "SHAREPOINT_FILE_DETAILS"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Synapse_GenericTable')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_Synapse01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_serverName": "@dataset().ls_param_serverName",
+						"ls_param_databaseName": "@dataset().ls_param_databaseName"
+					}
+				},
+				"parameters": {
+					"ls_param_serverName": {
+						"type": "string"
+					},
+					"ls_param_databaseName": {
+						"type": "string"
+					},
+					"ds_param_tableSchema": {
+						"type": "string"
+					},
+					"ds_param_tableName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "3 - Data Warehouse"
+				},
+				"annotations": [],
+				"type": "AzureSqlDWTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().ds_param_tableSchema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().ds_param_tableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_AzureSQLDatabase_CPRS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_AzureSqlDatabase_CPRS",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_tableSchema": {
+						"type": "string"
+					},
+					"ds_param_tableName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "1 - Databases"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().ds_param_tableSchema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().ds_param_tableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SharePoint_Generic_List')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SharePoint_List01",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_SharePointListName": {
+						"type": "String",
+						"defaultValue": "NP_SPM_Name"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "SharePointOnlineListResource",
+				"schema": [],
+				"typeProperties": {
+					"listName": {
+						"value": "@dataset().ds_param_SharePointListName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_Sharepoint_CSV_SOURCE_TO_LND')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_Sharepoint_Folder",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"param_sharepoint_baseURL": {
+							"value": "@dataset().param_sharepoint_baseurl",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"RELATIVE_URL_ENDPOINT": {
+						"type": "string"
+					},
+					"param_sharepoint_baseurl": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "2 - Landing"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@dataset().RELATIVE_URL_ENDPOINT",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_Sharepoint_PDF_SOURCE_TO_DZ')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_Sharepoint_Folder",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"param_sharepoint_baseURL": {
+							"value": "@dataset().param_sharepoint_baseURL",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"RELATIVE_URL_ENDPOINT": {
+						"type": "string"
+					},
+					"param_sharepoint_baseURL": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "4 - Drop-Zone"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@dataset().RELATIVE_URL_ENDPOINT",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LandingFilesFlow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "LS_SQL_ELTFrameworkDB01",
+								"type": "LinkedServiceReference"
+							},
+							"name": "LandingFileTransformation"
+						}
+					],
+					"sinks": [
+						{
+							"name": "LandingFileSink"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'query',",
+						"     store: 'sqlserver',",
+						"     query: 'SELECT [FILE_NAME] FROM [CTL].CFG_LANDING_FILE ',",
+						"     isolationLevel: 'READ_UNCOMMITTED') ~> LandingFileTransformation",
+						"LandingFileTransformation sink(validateSchema: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     store: 'cache',",
+						"     format: 'inline',",
+						"     output: true,",
+						"     saveOrder: 1) ~> LandingFileSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/03_Sustainability_Bronze_To_Silver')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "market_electricity_transactions_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "market_electricity_transactions_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "reference_data_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "reference_data_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_START",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_START",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "gas_allocation_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "gas_allocation_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "gas_composition_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "gas_composition_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "fuel_transactions_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "fuel_transactions_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "retail_electricity_charge_details_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "retail_electricity_charge_details_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_SUCCESS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "market_electricity_transactions_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "reference_data_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "gas_allocation_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "gas_composition_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "fuel_transactions_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "retail_electricity_charge_details_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Switch _ Validation Errros Detected",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "petroleum_based_oils_and_greases_consumed_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "sf6_emissions_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "asset_electricity_generated_pi_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "duid_connection_point_mapping_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "hydrogen_consumed_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "liquified_petroleum_gas_consumed_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "data_validation_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "market_electricity_transactions_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "reference_data_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "gas_allocation_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "gas_composition_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "fuel_transactions_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "retail_electricity_charge_details_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "petroleum_based_oils_and_greases_consumed_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "sf6_emissions_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "asset_electricity_generated_pi_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "duid_connection_point_mapping_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "hydrogen_consumed_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							},
+							{
+								"activity": "liquified_petroleum_gas_consumed_silver",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "data_validation_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Data_validation_errors",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "data_validation_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "validation_errors_detected",
+							"value": {
+								"value": "@json(activity('data_validation_silver').output.status.Output.result.exitValue).totalValidationErrors\n\n",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_VALIDATION_CHECKS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "data_validation_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Validation_Checks",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Switch _ Validation Errros Detected",
+						"type": "Switch",
+						"dependsOn": [
+							{
+								"activity": "Data_validation_errors",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"on": {
+								"value": "@string(greater(variables('validation_errors_detected'), 0))",
+								"type": "Expression"
+							},
+							"cases": [
+								{
+									"value": "True",
+									"activities": [
+										{
+											"name": "NOTIFICATION_ON_VALIDATION_ERRORS_DETECTED",
+											"type": "ExecutePipeline",
+											"dependsOn": [],
+											"policy": {
+												"secureInput": false
+											},
+											"userProperties": [],
+											"typeProperties": {
+												"pipeline": {
+													"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+													"type": "PipelineReference"
+												},
+												"waitOnCompletion": true,
+												"parameters": {
+													"pl_param_MartName": {
+														"value": "@concat(variables('validation_errors_detected'), ' validation errors detected. Please refer to the Dedicated SQL view dbo.vLatestDataValidationResults for latest validation results.')",
+														"type": "Expression"
+													},
+													"pl_param_PipelineRunId": {
+														"value": "@pipeline().RunId",
+														"type": "Expression"
+													},
+													"pl_param_PipeLineName": {
+														"value": "@pipeline().Pipeline",
+														"type": "Expression"
+													}
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "petroleum_based_oils_and_greases_consumed_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "petroleum_based_oils_and_greases_consumed_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_PBOG",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "petroleum_based_oils_and_greases_consumed_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Petroleum_Based_Oils_And_Greases_Consumed_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_RETAIL_ELECTRICITY",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "retail_electricity_charge_details_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Retail_Electricity_Charge_Details_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_FUEL_TRANSACTIONS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "fuel_transactions_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Fuel_Transactions_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_GAS_COMPOSITION",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "gas_composition_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Gas_Composition_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_GAS_ALLOCATION",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "gas_allocation_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Gas_Allocation_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_REFRENCE_DATA",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "reference_data_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Reference_Data\n_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_MARKET_ELECTRICITY",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "market_electricity_transactions_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Market_Electricity_Transactions_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "sf6_emissions_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "sf6_emissions_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_SF6_EMISSIONS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "sf6_emissions_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Sf6_Emissions_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "asset_electricity_generated_pi_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "asset_electricity_generated_pi_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "duid_connection_point_mapping_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "duid_connection_point_mapping_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "hydrogen_consumed_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "hydrogen_consumed_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "liquified_petroleum_gas_consumed_silver",
+						"type": "SynapseNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "liquified_petroleum_gas_consumed_silver",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_LPG_CONSUMED",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "liquified_petroleum_gas_consumed_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Liquified_Petroleum_Gas_Consumed_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_ASSET_GENERATED_ELECTRICITY",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "asset_electricity_generated_pi_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Asset_Electricity_Generated_Pi_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_DUID_MAPPING",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "duid_connection_point_mapping_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Duid_Connection_Point_Mapping_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_HYDROGEN_CONSUMED",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "hydrogen_consumed_silver",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Bronze_To_Silver_Hydrogen_Gas_Consumed_Silver",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"validation_errors_detected": {
+						"type": "Integer",
+						"defaultValue": 5
+					}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/SustainabilityUseCase/01_ORCHESTRATION"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_START')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_SUCCESS')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_FAIL')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/04_Sustainability_Silver_To_Gold_Dimensions')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "NOTIFICATION_ON_START",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_START",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Dimensions",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "dim_site_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "dim_site_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "dim_emission_scope_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "dim_emission_scope_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "dim_usage_category_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "dim_usage_category_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_SUCCESS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "dim_site_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "dim_emission_scope_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "dim_usage_category_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Dimensions",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/SustainabilityUseCase/01_ORCHESTRATION"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_START')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_SUCCESS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/05_Sustainability_Silver_To_Gold_Facts')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "NOTIFICATION_ON_START",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_START",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "fact_fuel_consumption_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "fact_fuel_consumption_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "fact_gas_consumption_composition_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "fact_gas_consumption_composition_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "fact_electricity_import_export_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "fact_electricity_import_export_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "fact_retail_electricity_consumption_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "fact_retail_electricity_consumption_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "fact_ghg_emission_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "fact_fuel_consumption_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "fact_gas_consumption_composition_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "fact_electricity_import_export_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "fact_retail_electricity_consumption_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "fact_ghg_emission_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_SUCCESS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "fact_ghg_emission_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "flat_petroleum_based_oils_and_greases_consumption_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "flat_hydrogen_consumption_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "flat_liquified_petroleum_gas_consumption_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "flat_sf6_emissions_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "flat_electricity_import_export_generated_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "flat_retail_electricity_consumption_detail_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "flat_asset_electricity_generated_gold",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_fact_fuel_consumption_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "fact_fuel_consumption_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_fact_fuel_consumption_gold",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_fact_gas_consum_comp_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "fact_gas_consumption_composition_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_fact_gas_consumption_composition_gold",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_fact_electricity_import_export",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "fact_electricity_import_export_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_fact_electricity_import_export_gold",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_fact_retail_electricity_cons",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "fact_retail_electricity_consumption_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_fact_retail_electricity_consumption_gold\n",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_fact_ghg_emission_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "fact_ghg_emission_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_fact_ghg_emission_gold",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "flat_petroleum_based_oils_and_greases_consumption_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "flat_petroleum_based_oils_and_greases_consumption_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_flat_pbog_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "flat_petroleum_based_oils_and_greases_consumption_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_flat_petroleum_based_oils_and_greases_consumption",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "flat_hydrogen_consumption_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "flat_hydrogen_consumption_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "flat_liquified_petroleum_gas_consumption_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "flat_liquified_petroleum_gas_consumption_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "flat_sf6_emissions_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "flat_sf6_emissions_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "flat_electricity_import_export_generated_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "flat_electricity_import_export_generated_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "flat_retail_electricity_consumption_detail_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "flat_retail_electricity_consumption_detail_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_flat_retail_elec_cons_det_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "flat_retail_electricity_consumption_detail_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_flat_retail_electricity_consumption_detail",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_flat_hydrogen_consumption_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "flat_hydrogen_consumption_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_flat_hydrogen_consumption",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_flat_lpg_consumption_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "flat_liquified_petroleum_gas_consumption_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_flat_lpg_consumption",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_flat_sf6_emissions_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "flat_sf6_emissions_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_flat_sf6_emissions",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_flat_elec_imp_exp_gen_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "flat_electricity_import_export_generated_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_flat_electricity_import_export_generated",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "flat_asset_electricity_generated_gold",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "flat_asset_electricity_generated_gold",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_flat_asset_elect_generated_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "flat_asset_electricity_generated_gold",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "Sustainability_Silver_To_Gold_Facts_flat_asset_electricity_generated_gold",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/SustainabilityUseCase/01_ORCHESTRATION"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_START')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_SUCCESS')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_FAIL')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AEMO_MSATS_Snapshot_CMR_XMLtoParquet')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "MSATS_Snapshot_CMR_FileCopy",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "XmlSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.xml",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "XmlReadSettings",
+									"validationMode": "none",
+									"namespaces": true
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "[['SequenceNumber']"
+										},
+										"sink": {
+											"name": "SequenceNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CreationDate']"
+										},
+										"sink": {
+											"name": "CreationDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['MaintenanceDate']"
+										},
+										"sink": {
+											"name": "MaintenanceDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['RowStatus']"
+										},
+										"sink": {
+											"name": "RowStatus",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['FromDate']"
+										},
+										"sink": {
+											"name": "FromDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['ToDate']"
+										},
+										"sink": {
+											"name": "ToDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['NMI']"
+										},
+										"sink": {
+											"name": "NMI",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['SerialNumber']"
+										},
+										"sink": {
+											"name": "SerialNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['NextScheduledReadDate']"
+										},
+										"sink": {
+											"name": "NextScheduledReadDate",
+											"type": "Date"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Location']"
+										},
+										"sink": {
+											"name": "Location",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Hazard']"
+										},
+										"sink": {
+											"name": "Hazard",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['InstallationTypeCode']"
+										},
+										"sink": {
+											"name": "InstallationTypeCode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Use']"
+										},
+										"sink": {
+											"name": "Use",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Manufacturer']"
+										},
+										"sink": {
+											"name": "Manufacturer",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Model']"
+										},
+										"sink": {
+											"name": "Model",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['LastTestDate']"
+										},
+										"sink": {
+											"name": "LastTestDate",
+											"type": "Date"
+										}
+									},
+									{
+										"source": {
+											"path": "[['TestResult']"
+										},
+										"sink": {
+											"name": "TestResult",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['ReadTypeCode']"
+										},
+										"sink": {
+											"name": "ReadTypeCode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Status']"
+										},
+										"sink": {
+											"name": "Status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CurrentTransformerLocation']"
+										},
+										"sink": {
+											"name": "CurrentTransformerLocation",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CurrentTransformerType']"
+										},
+										"sink": {
+											"name": "CurrentTransformerType",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CurrentTransformerRatioAvailable']"
+										},
+										"sink": {
+											"name": "CurrentTransformerRatioAvailable",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CurrentTransformerRatioConnected']"
+										},
+										"sink": {
+											"name": "CurrentTransformerRatioConnected",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CurrentTransformerAccuracyClass']"
+										},
+										"sink": {
+											"name": "CurrentTransformerAccuracyClass",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CurrentTransformerTest']"
+										},
+										"sink": {
+											"name": "CurrentTransformerTest",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CurrentTransformerTestDate']"
+										},
+										"sink": {
+											"name": "CurrentTransformerTestDate",
+											"type": "Date"
+										}
+									},
+									{
+										"source": {
+											"path": "[['GPSCoordinates']['Latitude']"
+										},
+										"sink": {
+											"name": "Latitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['GPSCoordinates']['Longitude']"
+										},
+										"sink": {
+											"name": "Longitude",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"path": "[['VoltageTransformerLocation']"
+										},
+										"sink": {
+											"name": "VoltageTransformerLocation",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['VoltageTransformerType']"
+										},
+										"sink": {
+											"name": "VoltageTransformerType",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['VoltageTransformerRatio']"
+										},
+										"sink": {
+											"name": "VoltageTransformerRatio",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['VoltageTransformerAccuracyClass']"
+										},
+										"sink": {
+											"name": "VoltageTransformerAccuracyClass",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['VoltageTransformerTest']"
+										},
+										"sink": {
+											"name": "VoltageTransformerTest",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['VoltageTransformerTestDate']"
+										},
+										"sink": {
+											"name": "VoltageTransformerTestDate",
+											"type": "Date"
+										}
+									},
+									{
+										"source": {
+											"path": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportParameters']['Participant']"
+										},
+										"sink": {
+											"name": "ParticipantId",
+											"type": "String"
+										}
+									}
+								],
+								"collectionReference": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportResults']['ReplicationBlock']['Row']"
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_SRC_ADSL_MSATS_SnapshotXmlFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_container": {
+										"value": "@pipeline().parameters.pl_param_container",
+										"type": "Expression"
+									},
+									"ds_param_folder": {
+										"value": "@pipeline().parameters.pl_param_folder",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_ADSL_MSATS_CMR_ParquetFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_container": "raw",
+									"ds_param_folder": "AEMO/msats_snapshots/msats_nmi_meters"
+								}
+							}
+						]
+					},
+					{
+						"name": "NOTIFICATION_ON_START",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_START",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "MSATS_Snapshot_Refresh",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_MSATS_Snapshot_Copy",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "MSATS_Snapshot_CMR_FileCopy",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "MSATS_Snapshot_Copy",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "AEMO_Bronze_NMI_METERS_FullHistory",
+						"description": "Removes unwanted files.",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "MSATS_Snapshot_CMR_FileCopy",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "AEMO_Bronze_NMI_METERS_FullHistory",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_SUCCESS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "AEMO_Bronze_NMI_METERS_FullHistory",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "AEMO_Bronze_NMI_METERS_FullHistory",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_NMI_METERS_FullHistory",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "AEMO_Bronze_NMI_METERS_FullHistory",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "AEMO_Bronze_NMI_METERS_FullHistory",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_container": {
+						"type": "string",
+						"defaultValue": "drop-zone"
+					},
+					"pl_param_folder": {
+						"type": "string",
+						"defaultValue": "aemo/msats_snapshots/nmimeters"
+					}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/RetailUseCaseMSATS/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_START')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_FAIL')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_SUCCESS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AEMO_MSATS_Snapshot_CND_XMLtoParquet')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "MSATS_Snapshot_CND_FileCopy",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "XmlSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.xml",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "XmlReadSettings",
+									"validationMode": "none",
+									"namespaces": true
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "[['SequenceNumber']"
+										},
+										"sink": {
+											"name": "SequenceNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CreationDate']"
+										},
+										"sink": {
+											"name": "CreationDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['MaintenanceDate']"
+										},
+										"sink": {
+											"name": "MaintenanceDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['RowStatus']"
+										},
+										"sink": {
+											"name": "RowStatus",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['FromDate']"
+										},
+										"sink": {
+											"name": "FromDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['ToDate']"
+										},
+										"sink": {
+											"name": "ToDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['NMI']"
+										},
+										"sink": {
+											"name": "NMI",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['JurisdictionCode']"
+										},
+										"sink": {
+											"name": "JurisdictionCode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['NMIClassificationCode']"
+										},
+										"sink": {
+											"name": "NMIClassificationCode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['TransmissionNodeIdentifier']"
+										},
+										"sink": {
+											"name": "TransmissionNodeIdentifier",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['TransmissionNodeIdentifier2']"
+										},
+										"sink": {
+											"name": "TransmissionNodeIdentifier2",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['DistributionLossFactorCode']"
+										},
+										"sink": {
+											"name": "DistributionLossFactorCode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['ParentEmbeddedNetworkIdentifier']"
+										},
+										"sink": {
+											"name": "ParentEmbeddedNetworkIdentifier",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['ChildEmbeddedNetworkIdentifier']"
+										},
+										"sink": {
+											"name": "ChildEmbeddedNetworkIdentifier",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['BuildingOrPropertyName']"
+										},
+										"sink": {
+											"name": "BuildingName",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['Street']['StreetName']"
+										},
+										"sink": {
+											"name": "StreetName",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['Street']['StreetType']"
+										},
+										"sink": {
+											"name": "StreetType",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['Street']['StreetSuffix']"
+										},
+										"sink": {
+											"name": "StreetSuffix",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['House']['HouseNumber']"
+										},
+										"sink": {
+											"name": "HouseNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['House']['HouseNumberSuffix']"
+										},
+										"sink": {
+											"name": "HouseNumberSuffix",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['House']['HouseNumberTo']"
+										},
+										"sink": {
+											"name": "HouseNumberTo",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['House']['HouseNumberToSuffix']"
+										},
+										"sink": {
+											"name": "HouseNumberToSuffix",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['Lot']['LotNumber']"
+										},
+										"sink": {
+											"name": "LotNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['FlatOrUnit']['FlatOrUnitType']"
+										},
+										"sink": {
+											"name": "FlatType",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['FlatOrUnit']['FlatOrUnitNumber']"
+										},
+										"sink": {
+											"name": "FlatNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['FloorOrLevel']['FloorOrLevelNumber']"
+										},
+										"sink": {
+											"name": "FloorNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['FloorOrLevel']['FloorOrLevelType']"
+										},
+										"sink": {
+											"name": "FloorType",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StructuredAddress']['LocationDescriptor']"
+										},
+										"sink": {
+											"name": "LocationDescriptor",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['SuburbOrPlaceOrLocality']"
+										},
+										"sink": {
+											"name": "Suburb",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['StateOrTerritory']"
+										},
+										"sink": {
+											"name": "State",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['PostCode']"
+										},
+										"sink": {
+											"name": "PostCode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['DeliveryPointIdentifier']"
+										},
+										"sink": {
+											"name": "DeliveryPointIdentifier",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Address']['GNAFPID']"
+										},
+										"sink": {
+											"name": "GNAFPID",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Aggregate']"
+										},
+										"sink": {
+											"name": "Aggregate",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Status']"
+										},
+										"sink": {
+											"name": "Status",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['FeederClass']"
+										},
+										"sink": {
+											"name": "FeederClass",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CustomerClassificationCode']"
+										},
+										"sink": {
+											"name": "CustomerClassificationCode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CustomerThresholdCode']"
+										},
+										"sink": {
+											"name": "CustomerThresholdCode",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['SharedIsolationPointFlag']"
+										},
+										"sink": {
+											"name": "SharedIsolationPointFlag",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['ConnectionConfiguration']"
+										},
+										"sink": {
+											"name": "ConnectionConfiguration",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['LastConsumerChangeDate']"
+										},
+										"sink": {
+											"name": "LastConsumerChangeDate",
+											"type": "Date"
+										}
+									},
+									{
+										"source": {
+											"path": "[['MeterMalfunctionExemptionNumber']"
+										},
+										"sink": {
+											"name": "MeterMalfunctionExemptionNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['MeterMalfunctionExemptionExpiryDate']"
+										},
+										"sink": {
+											"name": "MeterMalfunctionExemptionExpiryDate",
+											"type": "Date"
+										}
+									},
+									{
+										"source": {
+											"path": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportParameters']['Participant']"
+										},
+										"sink": {
+											"name": "ParticipantId",
+											"type": "String"
+										}
+									}
+								],
+								"collectionReference": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportResults']['ReplicationBlock']['Row']"
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_SRC_ADSL_MSATS_SnapshotXmlFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_container": {
+										"value": "@pipeline().parameters.pl_param_container",
+										"type": "Expression"
+									},
+									"ds_param_folder": {
+										"value": "@pipeline().parameters.pl_param_folder",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_ADSL_MSATS_CND_ParquetFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_container": "raw",
+									"ds_param_folder": "AEMO/msats_snapshots/msats_nmi_data"
+								}
+							}
+						]
+					},
+					{
+						"name": "NOTIFICATION_ON_START",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_START",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "MSATS_Snapshot_Refresh",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_MSATS_Snapshot_Copy",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "MSATS_Snapshot_CND_FileCopy",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "MSATS_Snapshot_Copy",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "AEMO_Bronze_NMI_DATA_FullHistory",
+						"description": "Removes unwanted files.",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "MSATS_Snapshot_CND_FileCopy",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "AEMO_Bronze_NMI_DATA_FullHistory",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_SUCCESS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "AEMO_Bronze_NMI_DATA_FullHistory",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "AEMO_Bronze_NMI_DATA_FullHistory",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_NMI_DATA_FullHistory",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "AEMO_Bronze_NMI_DATA_FullHistory",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "AEMO_Bronze_NMI_DATA_FullHistory",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_container": {
+						"type": "string",
+						"defaultValue": "drop-zone"
+					},
+					"pl_param_folder": {
+						"type": "string",
+						"defaultValue": "aemo/msats_snapshots/nmimaster"
+					}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/RetailUseCaseMSATS/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_START')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_FAIL')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_SUCCESS')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AEMO_MSATS_Snapshot_CNPR_XMLtoParquet')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "MSATS_Snapshot_CNPR_FileCopy",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "NOTIFICATION_ON_START",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "XmlSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.xml",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "XmlReadSettings",
+									"validationMode": "none",
+									"namespaces": true
+								}
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings",
+									"copyBehavior": "MergeFiles"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "[['SequenceNumber']"
+										},
+										"sink": {
+											"name": "SequenceNumber",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['CreationDate']"
+										},
+										"sink": {
+											"name": "CreationDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['MaintenanceDate']"
+										},
+										"sink": {
+											"name": "MaintenanceDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['RowStatus']"
+										},
+										"sink": {
+											"name": "RowStatus",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['FromDate']"
+										},
+										"sink": {
+											"name": "FromDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['ToDate']"
+										},
+										"sink": {
+											"name": "ToDate",
+											"type": "DateTime"
+										}
+									},
+									{
+										"source": {
+											"path": "[['NMI']"
+										},
+										"sink": {
+											"name": "NMI",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Party']"
+										},
+										"sink": {
+											"name": "Party",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "[['Role']"
+										},
+										"sink": {
+											"name": "Role",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportParameters']['Participant']"
+										},
+										"sink": {
+											"name": "ParticipantId",
+											"type": "String"
+										}
+									}
+								],
+								"collectionReference": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportResults']['ReplicationBlock']['Row']"
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_SRC_ADSL_MSATS_SnapshotXmlFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_container": {
+										"value": "@pipeline().parameters.pl_param_container",
+										"type": "Expression"
+									},
+									"ds_param_folder": {
+										"value": "@pipeline().parameters.pl_param_folder",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SNK_ADSL_MSATS_CNPR_ParquetFile",
+								"type": "DatasetReference",
+								"parameters": {
+									"ds_param_container": "raw",
+									"ds_param_folder": "AEMO/msats_snapshots/msats_nmi_role"
+								}
+							}
+						]
+					},
+					{
+						"name": "NOTIFICATION_ON_START",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_START",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "MSATS_Snapshot_Refresh",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_MSATS_Snapshot_Copy",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "MSATS_Snapshot_CNPR_FileCopy",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "MSATS_Snapshot_Copy",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "AEMO_Bronze_NMI_ROLE_FullHistory",
+						"description": "Removes unwanted files.",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "MSATS_Snapshot_CNPR_FileCopy",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": {
+									"value": "AEMO_Bronze_NMI_ROLE_FullHistory",
+									"type": "Expression"
+								},
+								"type": "NotebookReference"
+							},
+							"snapshot": true,
+							"sparkPool": {
+								"referenceName": {
+									"value": "JobSparkpool02",
+									"type": "Expression"
+								},
+								"type": "BigDataPoolReference"
+							},
+							"executorSize": "Medium",
+							"conf": {
+								"spark.dynamicAllocation.enabled": true
+							},
+							"driverSize": "Medium"
+						},
+						"linkedServiceName": {
+							"referenceName": "LS_Synapse_Analytics_Artifacts01",
+							"type": "LinkedServiceReference",
+							"parameters": {
+								"ls_param_endpoint": {
+									"value": "@pipeline().globalParameters.param_synapse_endpoint",
+									"type": "Expression"
+								},
+								"ls_param_workspace_id": {
+									"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_SUCCESS",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "AEMO_Bronze_NMI_ROLE_FullHistory",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "AEMO_Bronze_NMI_ROLE_FullHistory",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "NOTIFICATION_ON_FAILURE_NMI_ROLE_FullHistory",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "AEMO_Bronze_NMI_ROLE_FullHistory",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"pl_param_MartName": "AEMO_Bronze_NMI_ROLE_FullHistory",
+								"pl_param_PipelineRunId": {
+									"value": "@pipeline().RunId",
+									"type": "Expression"
+								},
+								"pl_param_PipeLineName": {
+									"value": "@pipeline().Pipeline",
+									"type": "Expression"
+								}
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"pl_param_container": {
+						"type": "string",
+						"defaultValue": "drop-zone"
+					},
+					"pl_param_folder": {
+						"type": "string",
+						"defaultValue": "aemo/msats_snapshots/nmiroles"
+					}
+				},
+				"folder": {
+					"name": "2 - DataHubPipelines/RetailUseCaseMSATS/SubPipelines"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_START')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_FAIL')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_TEAMS_NOTIF_ON_SUCCESS')]"
+			]
+		}
+	]
+}

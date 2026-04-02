@@ -1,0 +1,908 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "cql-dev-datahub-factory04"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_ADSL_BOM_OBS_ParquetFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_DataLake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_container": {
+						"type": "string",
+						"defaultValue": "raw"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "bom/obs_10min"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_container",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_ADSL_MSATS_CMR_ParquetFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_DataLake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_container": {
+						"type": "string",
+						"defaultValue": "raw"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "AEMO/msats_snapshots/msats_nmi_meters"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_container",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_ADSL_MSATS_CND_ParquetFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_DataLake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_container": {
+						"type": "string",
+						"defaultValue": "raw"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "AEMO/msats_snapshots/msats_nmi_data"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_container",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_ADSL_MSATS_CNPR_ParquetFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_DataLake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_container": {
+						"type": "string",
+						"defaultValue": "raw"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "AEMO/msats_snapshots/msats_nmi_role"
+					}
+				},
+				"folder": {
+					"name": "1 - Files"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_container",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADLS_GenericParquetFile')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_DataLake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ds_param_folder": {
+						"type": "String",
+						"defaultValue": "raw"
+					},
+					"ds_param_fileName": {
+						"type": "String"
+					},
+					"ds_filesystem": {
+						"type": "string",
+						"defaultValue": "datalake"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().ds_param_fileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_filesystem",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					},
+					"ds_param_archive_path": {
+						"type": "string",
+						"defaultValue": "2023/10-oct/02"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@if(equals(dataset().ds_param_archive_path,'yyyy/mm-mmm/dd'),\nconcat('AEMO_zip', '/',formatDateTime(utcnow(), 'yyyy'), '/',formatDateTime(utcnow(),'MM'),'-',toLower(formatDateTime(utcnow(),'MMM')),'/',formatDateTime(utcnow(),'dd')), concat('AEMO_zip', '/',dataset().ds_param_archive_path))\n",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_AllFolders')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "drop-zone"
+					},
+					"ds_param_path": {
+						"type": "string",
+						"defaultValue": "AEMO_NEMDE_zip"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_path",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_FileShare_Para')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					},
+					"ds_param_year": {
+						"type": "string",
+						"defaultValue": "2023"
+					},
+					"ds_param_month": {
+						"type": "string",
+						"defaultValue": "10-oct"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@concat('AEMO_zip_temp/',dataset().ds_param_year, '/',dataset().ds_param_month)",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_MSATS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					},
+					"ds_param_archive_path": {
+						"type": "string",
+						"defaultValue": "2023/10-oct/02"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@if(equals(dataset().ds_param_archive_path,'yyyy/mm-mmm/dd'),\nconcat('AEMO_MSATS_zip', '/',formatDateTime(utcnow(), 'yyyy'), '/',formatDateTime(utcnow(),'MM'),'-',toLower(formatDateTime(utcnow(),'MMM')),'/',formatDateTime(utcnow(),'dd')), concat('AEMO_MSATS_zip', '/',dataset().ds_param_archive_path))\n",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_NEMDE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "drop-zone"
+					},
+					"ds_param_archive_path": {
+						"type": "string",
+						"defaultValue": "20251006"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@if(equals(dataset().ds_param_archive_path,'yyyymmdd'),\nconcat('AEMO_NEMDE_zip', '/',formatDateTime(utcnow(), 'yyyy'),formatDateTime(utcnow(),'MM'),formatDateTime(utcnow(),'dd')), concat('AEMO_NEMDE_zip', '/',dataset().ds_param_archive_path))\n",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_delete')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					},
+					"ds_param_Path": {
+						"type": "string",
+						"defaultValue": "AEMO_zip"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_Path",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_destination')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "AEMO_SourceCopy",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_destination_FileShare_Para')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "AEMO_SourceCopy_temp",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_destination_MSATS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "AEMO_MSATS_SourceCopy",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_destination_NEMDE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "drop-zone"
+					},
+					"ds_param_path": {
+						"type": "string",
+						"defaultValue": "AEMO_NEMDE_SourceCopy"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_path",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_source')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "AEMO_zip",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					},
+					"compression": {
+						"type": "ZipDeflate"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_source_FileShare_Para')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "AEMO_zip_temp",
+						"fileSystem": "drop-zone"
+					},
+					"compression": {
+						"type": "ZipDeflate"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_source_MSATS')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "AEMO_MSATS_zip",
+							"type": "Expression"
+						},
+						"fileSystem": "drop-zone"
+					},
+					"compression": {
+						"type": "ZipDeflate"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_Filesystem_ADSL_Generic_source_NEMDE')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endPoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"ds_param_endPoint": {
+						"type": "string",
+						"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+					},
+					"ds_param_folder": {
+						"type": "string",
+						"defaultValue": "drop-zone"
+					},
+					"ds_param_path": {
+						"type": "string",
+						"defaultValue": "AEMO_NEMDE_zip"
+					}
+				},
+				"folder": {
+					"name": "2b - Datalake"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().ds_param_path",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().ds_param_folder",
+							"type": "Expression"
+						}
+					},
+					"compression": {
+						"type": "ZipDeflate"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SNK_SharePoint_CSV_TO_LND')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ADLS2_Landing",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@dataset().ds_param_endpoint",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"TARGET_FOLDER_PATH": {
+						"type": "string"
+					},
+					"TARGET_FILE_NAME": {
+						"type": "string"
+					},
+					"FILE_PATH": {
+						"type": "string"
+					},
+					"ds_param_endpoint": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "2 - Landing"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().TARGET_FILE_NAME",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat(dataset().FILE_PATH, '/', dataset().TARGET_FOLDER_PATH)",
+							"type": "Expression"
+						},
+						"fileSystem": "landing"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": []
+		}
+	]
+}
