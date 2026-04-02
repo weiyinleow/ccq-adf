@@ -129,6 +129,10 @@
 			"param_SharePoint_DistributionLossFactors": {
 				"type": "string",
 				"value": "NP_AEMO_DistributionLossFactors"
+			},
+			"param_lacimawebapi_serverurl": {
+				"type": "string",
+				"value": "https://lacima-api"
 			}
 		}
 	},
