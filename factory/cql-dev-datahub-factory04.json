@@ -97,6 +97,10 @@
 			"param_dl_storage_account": {
 				"type": "string",
 				"value": "cqldevdatahubsynapse"
+			},
+			"param_piwebapi_path": {
+				"type": "string",
+				"value": "\\\\\\\\CQL-DEV1-PCOL01\\\\"
 			}
 		}
 	},
