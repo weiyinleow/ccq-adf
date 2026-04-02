@@ -1,5 +1,13 @@
 {
 	"name": "cql-dev-datahub-factory04",
+	"properties": {
+		"globalParameters": {
+			"param_dl_storage_endpoint": {
+				"type": "string",
+				"value": "https://cqldevdatahubsynapse.dfs.core.windows.net"
+			}
+		}
+	},
 	"location": "australiaeast",
 	"identity": {
 		"type": "SystemAssigned",
