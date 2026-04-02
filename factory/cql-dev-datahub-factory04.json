@@ -69,6 +69,10 @@
 			"param_piwebapi_serverurl": {
 				"type": "string",
 				"value": "https://pivis.dev.cleancoqld.com.au/piwebapi/"
+			},
+			"param_document_ai_endpoint": {
+				"type": "string",
+				"value": "https://cql-dev-datahub-documentintelligence01.cognitiveservices.azure.com/"
 			}
 		}
 	},
