@@ -9,6 +9,10 @@
 			"param_blb_storage_endpoint": {
 				"type": "string",
 				"value": "https://cqldevdatahubdata.dfs.core.windows.net"
+			},
+			"param_dz_storage_endpoint": {
+				"type": "string",
+				"value": "https://cqldevdatahubdata.dfs.core.windows.net"
 			}
 		}
 	},
