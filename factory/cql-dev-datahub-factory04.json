@@ -61,6 +61,10 @@
 			"param_AEMO_path": {
 				"type": "string",
 				"value": "msats/retail/archive"
+			},
+			"param_keyvault_secrets_endpoint": {
+				"type": "string",
+				"value": "https://cql-dev-datahub-key.vault.azure.net/secrets/"
 			}
 		}
 	},
