@@ -117,6 +117,10 @@
 			"param_SharePoint_SF6_Emissions": {
 				"type": "string",
 				"value": "NP_SF6_Emissions"
+			},
+			"param_SharePoint_Coregas_Supplier_Transactions": {
+				"type": "string",
+				"value": "NP_Coregas_Supplier_Transactions"
 			}
 		}
 	},
