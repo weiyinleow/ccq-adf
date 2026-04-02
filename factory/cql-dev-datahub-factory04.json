@@ -113,6 +113,10 @@
 			"param_sharepoint_baseurl": {
 				"type": "string",
 				"value": "https://cleancoqueensland.sharepoint.com/sites/app-DataHub/_api/web/GetFileByServerRelativeUrl('/sites/app-DataHub/NP/"
+			},
+			"param_SharePoint_SF6_Emissions": {
+				"type": "string",
+				"value": "NP_SF6_Emissions"
 			}
 		}
 	},
