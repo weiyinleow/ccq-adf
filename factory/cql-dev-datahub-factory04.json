@@ -25,6 +25,10 @@
 			"param_synapse_WorkspaceName": {
 				"type": "string",
 				"value": "cql-dev-datahub-synapse01"
+			},
+			"param_synapse_SQLPoolName": {
+				"type": "string",
+				"value": "cqldevdatahubdsql01"
 			}
 		}
 	},
