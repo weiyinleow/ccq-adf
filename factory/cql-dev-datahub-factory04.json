@@ -53,6 +53,10 @@
 			"param_synapse_workspaceid": {
 				"type": "string",
 				"value": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+			},
+			"param_synapse_servername": {
+				"type": "string",
+				"value": "cql-dev-datahub-synapse01.sql.azuresynapse.net"
 			}
 		}
 	},
