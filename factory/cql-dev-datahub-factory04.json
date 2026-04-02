@@ -121,6 +121,10 @@
 			"param_SharePoint_Coregas_Supplier_Transactions": {
 				"type": "string",
 				"value": "NP_Coregas_Supplier_Transactions"
+			},
+			"param_SharePoint_DUID_Connection_Point_Mapping": {
+				"type": "string",
+				"value": "NP_DUID_Connection_Point_Mapping"
 			}
 		}
 	},
