@@ -45,6 +45,10 @@
 			"param_SharePoint_LacimaRiskFactor": {
 				"type": "string",
 				"value": "NP_SPM_LacimaRiskFactor"
+			},
+			"param_synapse_endpoint": {
+				"type": "string",
+				"value": "https://cql-dev-datahub-synapse01.dev.azuresynapse.net"
 			}
 		}
 	},
