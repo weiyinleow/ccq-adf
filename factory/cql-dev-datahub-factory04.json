@@ -17,6 +17,10 @@
 			"param_ResourceGroup": {
 				"type": "string",
 				"value": "CQL-AZUR1-DEVDATAHUB01-RG"
+			},
+			"param_SubscriptionID": {
+				"type": "string",
+				"value": "2e9f823e-dc76-4e8e-b815-c8a4f22d05ff"
 			}
 		}
 	},
