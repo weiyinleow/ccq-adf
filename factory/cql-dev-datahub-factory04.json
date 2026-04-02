@@ -13,6 +13,10 @@
 			"param_dz_storage_endpoint": {
 				"type": "string",
 				"value": "https://cqldevdatahubdata.dfs.core.windows.net"
+			},
+			"param_ResourceGroup": {
+				"type": "string",
+				"value": "CQL-AZUR1-DEVDATAHUB01-RG"
 			}
 		}
 	},
