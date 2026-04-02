@@ -57,6 +57,10 @@
 			"param_synapse_servername": {
 				"type": "string",
 				"value": "cql-dev-datahub-synapse01.sql.azuresynapse.net"
+			},
+			"param_AEMO_path": {
+				"type": "string",
+				"value": "msats/retail/archive"
 			}
 		}
 	},
