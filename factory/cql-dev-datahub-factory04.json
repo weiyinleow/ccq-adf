@@ -109,6 +109,10 @@
 			"param_SharePoint_FuelCard_Facility_Map": {
 				"type": "string",
 				"value": "NP_FuelCard_Facility_Map"
+			},
+			"param_sharepoint_baseurl": {
+				"type": "string",
+				"value": "https://cleancoqueensland.sharepoint.com/sites/app-DataHub/_api/web/GetFileByServerRelativeUrl('/sites/app-DataHub/NP/"
 			}
 		}
 	},
