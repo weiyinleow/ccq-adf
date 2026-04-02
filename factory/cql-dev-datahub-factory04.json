@@ -33,6 +33,10 @@
 			"param_SharePoint_Name": {
 				"type": "string",
 				"value": "NP_SPM_Name"
+			},
+			"param_SharePoint_Category": {
+				"type": "string",
+				"value": "NP_SPM_Categor"
 			}
 		}
 	},
