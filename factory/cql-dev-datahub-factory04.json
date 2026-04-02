@@ -77,6 +77,10 @@
 			"param_synapse_key_vault_linked_service_name": {
 				"type": "string",
 				"value": "LS_AKV_AA_KV01"
+			},
+			"param_key_vault_name": {
+				"type": "string",
+				"value": "cql-dev-datahub-key"
 			}
 		}
 	},
