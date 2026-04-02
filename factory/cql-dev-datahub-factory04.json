@@ -73,6 +73,10 @@
 			"param_document_ai_endpoint": {
 				"type": "string",
 				"value": "https://cql-dev-datahub-documentintelligence01.cognitiveservices.azure.com/"
+			},
+			"param_synapse_key_vault_linked_service_name": {
+				"type": "string",
+				"value": "LS_AKV_AA_KV01"
 			}
 		}
 	},
