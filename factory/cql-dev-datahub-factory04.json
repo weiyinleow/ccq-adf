@@ -1,0 +1,9 @@
+{
+	"name": "cql-dev-datahub-factory04",
+	"location": "australiaeast",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "3477e30a-8b9f-4302-a164-2db58c8647a6",
+		"tenantId": "f8b399f7-18b7-448f-ae4e-720e0347caf3"
+	}
+}
