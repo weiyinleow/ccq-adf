@@ -41,6 +41,10 @@
 			"param_SharePoint_RawFixedCost": {
 				"type": "string",
 				"value": "NP_SPM_RawFixedCost"
+			},
+			"param_SharePoint_LacimaRiskFactor": {
+				"type": "string",
+				"value": "NP_SPM_LacimaRiskFactor"
 			}
 		}
 	},
