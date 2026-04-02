@@ -85,6 +85,10 @@
 			"param_document_ai_key_secret_name": {
 				"type": "string",
 				"value": "cleanco-azure-ai-services-api-key"
+			},
+			"param_blb_storage_account": {
+				"type": "string",
+				"value": "cqldevdatahubdata"
 			}
 		}
 	},
