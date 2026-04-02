@@ -105,6 +105,10 @@
 			"param_SharePoint_ReferenceData": {
 				"type": "string",
 				"value": "NP_ReferenceData"
+			},
+			"param_SharePoint_FuelCard_Facility_Map": {
+				"type": "string",
+				"value": "NP_FuelCard_Facility_Map"
 			}
 		}
 	},
