@@ -1,0 +1,192 @@
+{
+	"name": "PL_INGEST_WORKER_LND_TO_DB_SqlServer",
+	"properties": {
+		"activities": [
+			{
+				"name": "copy",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "logWorkerStart",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFolderPath": {
+								"value": "@{trim(pipeline().parameters.pl_param_loadConfig.LANDING_PATH)}",
+								"type": "Expression"
+							},
+							"wildcardFileName": {
+								"value": "@{trim(toUpper(pipeline().parameters.pl_param_item.TARGET_TABLE))}__@{trim(pipeline().parameters.pl_param_item.LOAD_TYPE)}_*",
+								"type": "Expression"
+							},
+							"enablePartitionDiscovery": false
+						}
+					},
+					"sink": {
+						"type": "SqlServerSink",
+						"writeBehavior": "insert",
+						"tableOption": "autoCreate"
+					},
+					"enableStaging": false,
+					"enableSkipIncompatibleRow": true,
+					"redirectIncompatibleRowSettings": {
+						"linkedServiceName": {
+							"referenceName": "LS_ADLS2_Landing",
+							"type": "LinkedServiceReference"
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SRC_ADLS_GenericParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": "notRequiredAsWildcard",
+							"ds_param_fileName": "notRequiredAsWildcard"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SQL_SqlServer_GenericTable",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_tableSchema": {
+								"value": "@{pipeline().parameters.pl_param_item.TARGET_SCHEMA}",
+								"type": "Expression"
+							},
+							"ds_param_tableName": {
+								"value": "@{pipeline().parameters.pl_param_item.TARGET_TABLE}",
+								"type": "Expression"
+							},
+							"ls_param_serverName": {
+								"value": "@pipeline().parameters.pl_param_destinationConfig.SERVER_NAME",
+								"type": "Expression"
+							},
+							"ls_param_databaseName": {
+								"value": "@pipeline().parameters.pl_param_destinationConfig.DATABASE_NAME",
+								"type": "Expression"
+							},
+							"ls_param_username": {
+								"value": "@pipeline().parameters.pl_param_destinationConfig.USERNAME",
+								"type": "Expression"
+							},
+							"ls_param_password_keyvault_secret": {
+								"value": "@pipeline().parameters.pl_param_destinationConfig.PASSWORD_KEYVAULT_SECRET",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "logWorkerStart",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[CTL].[USP_LOG_WORKER_RUNNING]",
+					"storedProcedureParameters": {
+						"callingPipelineId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_pipelineId",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"callingPipelineRunId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_pipelineRunId",
+								"type": "Expression"
+							},
+							"type": "Guid"
+						},
+						"workerName": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"workerRunId": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "Guid"
+						},
+						"workerType": {
+							"value": "Ingest",
+							"type": "String"
+						},
+						"loadSetItemId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_item": {
+				"type": "object"
+			},
+			"pl_param_destinationConfig": {
+				"type": "object"
+			},
+			"pl_param_pipelineId": {
+				"type": "string"
+			},
+			"pl_param_pipelineRunId": {
+				"type": "string"
+			},
+			"pl_param_loadConfig": {
+				"type": "object"
+			}
+		},
+		"variables": {
+			"selectStatement": {
+				"type": "String"
+			},
+			"maxDeltaValue": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/2 - Landing to Store"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:20Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

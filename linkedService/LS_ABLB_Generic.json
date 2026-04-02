@@ -1,0 +1,17 @@
+{
+	"name": "LS_ABLB_Generic",
+	"properties": {
+		"parameters": {
+			"ls_param_endpoint": {
+				"type": "string",
+				"defaultValue": "https://cqldevdatahubsynapse.blob.core.windows.net"
+			}
+		},
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"serviceEndpoint": "@{linkedService().ls_param_endpoint}",
+			"accountKind": "BlobStorage"
+		}
+	}
+}

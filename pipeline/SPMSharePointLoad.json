@@ -1,0 +1,782 @@
+{
+	"name": "SPMSharePointLoad",
+	"properties": {
+		"activities": [
+			{
+				"name": "Ingestion_SharePoint",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy_SharePointList_SPM_Name",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Copy_SharePointList_SPM_Category",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Copy_SharePointList_SPM_RawFixedCost",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Copy_SharePointList_SPM_LacimaRiskFactor",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_MAIN",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_loadToken": "SharePoint_FILE_ADLS",
+						"pl_param_pipelineName": "SHAREPOINT_INGESTION_PIPELINE"
+					}
+				}
+			},
+			{
+				"name": "SharePoint_Bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Ingestion_SharePoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "SharePoint_Bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "SharePoint_Silver",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "SharePoint_Bronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "SharePoint_Silver",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "SharePoint_Gold",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "SharePoint_Silver",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "SharePoint_Gold",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Copy_SharePointList_SPM_Name",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_Name",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "SharePoint/SPM_Name",
+						"pl_param_fileName": "SPM_Name.csv"
+					}
+				}
+			},
+			{
+				"name": "Copy_SharePointList_SPM_Category",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_Category",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "SharePoint/SPM_Category",
+						"pl_param_fileName": "SPM_Category.csv"
+					}
+				}
+			},
+			{
+				"name": "Copy_SharePointList_SPM_RawFixedCost",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_RawFixedCost",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "SharePoint/SPM_RawFixedCost",
+						"pl_param_fileName": "SPM_RawFixedCost.csv"
+					}
+				}
+			},
+			{
+				"name": "Copy_SharePointList_SPM_LacimaRiskFactor",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_LacimaRiskFactor",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "SharePoint/SPM_LacimaRiskFactor",
+						"pl_param_fileName": "SPM_LacimaRiskFactor.csv"
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "SPMSharePointLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "SharePoint_Gold",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "dim_risk_factor_gold",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "SPM",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SharePoint_Bronze",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "SharePoint_Bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "SharePoint_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SharePoint_Silver",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "SharePoint_Silver",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "SharePoint_Silver",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SharePoint_Gold",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "SharePoint_Gold",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "SharePoint_Gold",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SHAREPOINT_Ingestion",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Ingestion_SharePoint",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "LACIMA_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SPM_Name_Copy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy_SharePointList_SPM_Name",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "LACIMA_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SPM_Category_Copy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy_SharePointList_SPM_Category",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "LACIMA_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SPM_RawFixedCost_Copy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy_SharePointList_SPM_RawFixedCost",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "LACIMA_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SPM_LacimaRiskFactor_Copy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Copy_SharePointList_SPM_LacimaRiskFactor",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "LACIMA_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "dim_risk_factor_gold",
+				"description": "This notebook was created to give business users access to the dimension table (dim_risk_factor_gold), allowing them to avoid running the performance-heavy query.",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "SharePoint_Silver",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "dim_risk_factor_gold",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": "@pipeline().globalParameters.param_synapse_endpoint",
+						"ls_param_workspace_id": "@pipeline().globalParameters.param_synapse_workspaceid"
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_dim_risk_factor_gold",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "dim_risk_factor_gold",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "dim_risk_factor_gold",
+						"pl_param_PipelineRunId": "@pipeline().RunId",
+						"pl_param_PipeLineName": "@pipeline().Pipeline"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "2 - DataHubPipelines"
+		},
+		"annotations": []
+	}
+}

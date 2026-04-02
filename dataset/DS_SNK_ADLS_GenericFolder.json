@@ -1,0 +1,45 @@
+{
+	"name": "DS_SNK_ADLS_GenericFolder",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Generic",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": {
+					"value": "@dataset().ds_param_endPoint",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_endPoint": {
+				"type": "string"
+			},
+			"ds_param_folder": {
+				"type": "string"
+			},
+			"ds_param_fileSystem": {
+				"type": "string",
+				"defaultValue": "landing"
+			}
+		},
+		"folder": {
+			"name": "2 - Landing"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().ds_param_folder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().ds_param_fileSystem",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

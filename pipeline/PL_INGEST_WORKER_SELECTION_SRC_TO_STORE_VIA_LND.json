@@ -1,0 +1,521 @@
+{
+	"name": "PL_INGEST_WORKER_SELECTION_SRC_TO_STORE_VIA_LND",
+	"properties": {
+		"description": "Generic Loader of Source System to Landing Layer",
+		"activities": [
+			{
+				"name": "execWorkerSrcToLnd",
+				"type": "Switch",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@pipeline().parameters.pl_param_sourceConfig.CONNECTION_TYPE",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "sqlServer",
+							"activities": [
+								{
+									"name": "execWorkerLndSqlServer",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SqlServer",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"pl_param_item": {
+												"value": "@pipeline().parameters.pl_param_loadItem",
+												"type": "Expression"
+											},
+											"pl_param_sourceConfig": {
+												"value": "@pipeline().parameters.pl_param_sourceConfig",
+												"type": "Expression"
+											},
+											"pl_param_pipelineId": {
+												"value": "@pipeline().parameters.pl_param_pipelineId",
+												"type": "Expression"
+											},
+											"pl_param_pipelineRunId": {
+												"value": "@pipeline().parameters.pl_param_pipelineRunId",
+												"type": "Expression"
+											},
+											"pl_param_loadConfig": {
+												"value": "@pipeline().parameters.pl_param_loadConfig",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "setWorkerLndSqlServer",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "execWorkerLndSqlServer",
+											"dependencyConditions": [
+												"Completed"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "workerRunId",
+										"value": {
+											"value": "@activity('execWorkerLndSqlServer').output.PipelineRunId",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"value": "azureSqlDatabase",
+							"activities": [
+								{
+									"name": "execWorkerAzureSqlDb",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_AzureSqlDatabase",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"pl_param_item": {
+												"value": "@pipeline().parameters.pl_param_loadItem",
+												"type": "Expression"
+											},
+											"pl_param_sourceConfig": {
+												"value": "@pipeline().parameters.pl_param_sourceConfig",
+												"type": "Expression"
+											},
+											"pl_param_pipelineId": {
+												"value": "@pipeline().parameters.pl_param_pipelineId",
+												"type": "Expression"
+											},
+											"pl_param_pipelineRunId": {
+												"value": "@pipeline().parameters.pl_param_pipelineRunId",
+												"type": "Expression"
+											},
+											"pl_param_loadConfig": {
+												"value": "@pipeline().parameters.pl_param_loadConfig",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "setWorkerLndAzureSqlDb",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "execWorkerAzureSqlDb",
+											"dependencyConditions": [
+												"Completed"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "workerRunId",
+										"value": {
+											"value": "@activity('execWorkerAzureSqlDb').output.PipelineRunId",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"value": "azureBlobStore",
+							"activities": [
+								{
+									"name": "execWorkerAzureBlobStore",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_AzureBlob",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"pl_param_item": {
+												"value": "@pipeline().parameters.pl_param_loadItem",
+												"type": "Expression"
+											},
+											"pl_param_sourceConfig": {
+												"value": "@pipeline().parameters.pl_param_sourceConfig",
+												"type": "Expression"
+											},
+											"pl_param_pipelineId": {
+												"value": "@pipeline().parameters.pl_param_pipelineId",
+												"type": "Expression"
+											},
+											"pl_param_pipelineRunId": {
+												"value": "@pipeline().parameters.pl_param_pipelineRunId",
+												"type": "Expression"
+											},
+											"pl_param_loadConfig": {
+												"value": "@pipeline().parameters.pl_param_loadConfig",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "setWorkerLndAzureBlobStore",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "execWorkerAzureBlobStore",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "workerRunId",
+										"value": {
+											"value": "@activity('execWorkerAzureBlobStore').output.PipelineRunId",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "execWorkerLndToStore",
+				"type": "Switch",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "execWorkerSrcToLnd",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@pipeline().parameters.pl_param_destinationConfig.CONNECTION_TYPE",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "sqlServer",
+							"activities": [
+								{
+									"name": "execWorkerStoreSqlServer",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_INGEST_WORKER_LND_TO_DB_SqlServer",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"pl_param_item": {
+												"value": "@pipeline().parameters.pl_param_loadItem",
+												"type": "Expression"
+											},
+											"pl_param_destinationConfig": {
+												"value": "@pipeline().parameters.pl_param_destinationConfig",
+												"type": "Expression"
+											},
+											"pl_param_pipelineId": {
+												"value": "@pipeline().parameters.pl_param_pipelineId",
+												"type": "Expression"
+											},
+											"pl_param_pipelineRunId": {
+												"value": "@pipeline().parameters.pl_param_pipelineRunId",
+												"type": "Expression"
+											},
+											"pl_param_loadConfig": {
+												"value": "@pipeline().parameters.pl_param_loadConfig",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "setWorkerStoreSqlServer",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "execWorkerStoreSqlServer",
+											"dependencyConditions": [
+												"Completed"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "workerRunId",
+										"value": {
+											"value": "@activity('execWorkerStoreSqlServer').output.PipelineRunId",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"value": "azureSqlDatabase",
+							"activities": [
+								{
+									"name": "execWorkerStoreAzureSqlDb",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_INGEST_WORKER_LND_TO_DB_AzureSqlDatabase",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"pl_param_item": {
+												"value": "@pipeline().parameters.pl_param_loadItem",
+												"type": "Expression"
+											},
+											"pl_param_destinationConfig": {
+												"value": "@pipeline().parameters.pl_param_destinationConfig",
+												"type": "Expression"
+											},
+											"pl_param_pipelineId": {
+												"value": "@pipeline().parameters.pl_param_pipelineId",
+												"type": "Expression"
+											},
+											"pl_param_pipelineRunId": {
+												"value": "@pipeline().parameters.pl_param_pipelineRunId",
+												"type": "Expression"
+											},
+											"pl_param_loadConfig": {
+												"value": "@pipeline().parameters.pl_param_loadConfig",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "setWorkerStoreAzureSqlDb",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "execWorkerStoreAzureSqlDb",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "workerRunId",
+										"value": {
+											"value": "@activity('execWorkerStoreAzureSqlDb').output.PipelineRunId",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"value": "azureSynapseSpark",
+							"activities": [
+								{
+									"name": "execWorkerLndToStoreSynapseSpark",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_INGEST_WORKER_LND_TO_STORE_Synapse_Spark",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"pl_param_item": {
+												"value": "@pipeline().parameters.pl_param_loadItem",
+												"type": "Expression"
+											},
+											"pl_param_destinationConfig": {
+												"value": "@pipeline().parameters.pl_param_destinationConfig",
+												"type": "Expression"
+											},
+											"pl_param_pipelineId": {
+												"value": "@pipeline().parameters.pl_param_pipelineId",
+												"type": "Expression"
+											},
+											"pl_param_pipelineRunId": {
+												"value": "@pipeline().parameters.pl_param_pipelineRunId",
+												"type": "Expression"
+											},
+											"pl_param_loadConfig": {
+												"value": "@pipeline().parameters.pl_param_loadConfig",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "logWorkerDestCompletion",
+				"type": "ExecutePipeline",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "execWorkerLndToStore",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_LOG_WORKER",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_pipelineId": {
+							"value": "@pipeline().parameters.pl_param_pipelineId",
+							"type": "Expression"
+						},
+						"pl_param_workerRunId": {
+							"value": "@variables('workerRunId')",
+							"type": "Expression"
+						},
+						"pl_param_workerType": "Ingest",
+						"pl_param_throwErrorOnFail": false
+					}
+				}
+			},
+			{
+				"name": "logWorkerLndCompletion",
+				"type": "ExecutePipeline",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_LOG_WORKER",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_pipelineId": {
+							"value": "@pipeline().parameters.pl_param_pipelineId",
+							"type": "Expression"
+						},
+						"pl_param_workerRunId": {
+							"value": "@variables('workerRunId')",
+							"type": "Expression"
+						},
+						"pl_param_workerType": "Ingest",
+						"pl_param_throwErrorOnFail": true
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_pipelineId": {
+				"type": "string"
+			},
+			"pl_param_pipelineRunId": {
+				"type": "string"
+			},
+			"pl_param_sourceConfig": {
+				"type": "object"
+			},
+			"pl_param_loadItem": {
+				"type": "object"
+			},
+			"pl_param_loadConfig": {
+				"type": "object"
+			},
+			"pl_param_destinationConfig": {
+				"type": "object"
+			}
+		},
+		"variables": {
+			"workerRunId": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:20Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,36 @@
+{
+	"name": "TR_Every_10Min",
+	"properties": {
+		"description": "Trigger for every ten minutes",
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "PL_BOM_Obs",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"pSftpDirectory": "/register/bom1312/fwo",
+					"pDatasetName": "obs_10min",
+					"pSftpDropzoneRoot": "bom/obs_10min/sftp",
+					"pLandingRoot": "bom/obs_10min",
+					"pFileName": "IDQ60920.xml",
+					"pftpDirectory": "fwo",
+					"pftpDropzoneRoot": "bom/obs_10min/ftp",
+					"pBronzeRoot": "bom/obs_10min"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 10,
+				"startTime": "2026-03-20T18:13:00",
+				"endTime": "2026-03-30T09:04:00",
+				"timeZone": "E. Australia Standard Time"
+			}
+		}
+	}
+}

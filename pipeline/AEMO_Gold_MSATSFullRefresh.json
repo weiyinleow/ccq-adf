@@ -1,0 +1,420 @@
+{
+	"name": "AEMO_Gold_MSATSFullRefresh",
+	"properties": {
+		"activities": [
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Gold_MSATSFullRefresh",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_Gold_FactMeterConsumption_MSATSRefresh",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "SP_TruncateTable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_Gold_FactMeterConsumption_MSATSRefresh",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool03",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Large"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_AEMO_Gold_1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Gold_FactMeterConsumption_MSATSRefresh",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Gold_FactMeterConsumption_Full",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Gold_FactMeterConsumption_MSATSRefresh",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "AEMO_Gold_FactMeterUsageData_5min",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "AEMO_Gold_MissingIntervals",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Gold_MSATSFullRefresh",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "MSATLoad",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "MSATLoad",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_AEMO_Gold_1_copy1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "MSATLoad",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "SP_TruncateTable",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "MSATLoad",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[USP_TruncateTable]",
+					"storedProcedureParameters": {
+						"tablename": {
+							"value": "FactMeterConsumption",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_Synapse01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_serverName": {
+							"value": "@pipeline().globalParameters.param_synapse_servername",
+							"type": "Expression"
+						},
+						"ls_param_databaseName": {
+							"value": "@pipeline().globalParameters.param_synapse_SQLPoolName",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_Gold_FactMeterUsageData_5min",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "MSATLoad",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_Gold_FactMeterUsageData_5min",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool03",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Large"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_Gold_MissingIntervals",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_Gold_MissingIntervals",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_AEMO_Gold_MissingIntervals",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Gold_MissingIntervals",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Gold_MissingIntervals",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "2 - DataHubPipelines/RetailUseCase/SubPipelines"
+		},
+		"annotations": []
+	}
+}

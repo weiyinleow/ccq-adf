@@ -1,0 +1,46 @@
+{
+	"name": "DS_CFG_ADLS_GenericConfigFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Config",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ds_param_ConfigFilePath": {
+				"type": "String"
+			},
+			"ds_param_ConfigFileName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().ds_param_ConfigFileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().ds_param_ConfigFilePath",
+					"type": "Expression"
+				},
+				"fileSystem": "config"
+			},
+			"fileName": {
+				"value": "@{dataset().ds_param_ConfigFileName}",
+				"type": "Expression"
+			},
+			"folderPath": {
+				"value": "@{dataset().ds_param_ConfigFilePath}",
+				"type": "Expression"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

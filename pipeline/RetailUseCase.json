@@ -1,0 +1,535 @@
+{
+	"name": "RetailUseCase",
+	"properties": {
+		"activities": [
+			{
+				"name": "AEMO_Copy_Fileshare",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_archive_path": {
+							"value": "@pipeline().parameters.mpl_param_archive_Path",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_DZ_TO_LND",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Copy_unzip",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_DZ_To_Landing",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Ingestion_AEMO",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_DZ_TO_LND",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "Ingestion_AEMO",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_DZ_Delete",
+				"description": "Removes unwanted files.",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Copy_Fileshare",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_DZ_Delete",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_Copy_unzip",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_DZ_Delete",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob_unzip",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Delete_Copiedfiles",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Copy_unzip",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_SNK_Filesystem_ADSL_Generic_delete",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							},
+							"ds_param_Path": "AEMO_zip"
+						}
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_AEMO_COPY",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Copy_Fileshare",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_AEMO_Unzip",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Copy_unzip",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_AEMO_Delete",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_DZ_Delete",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Get_Folder_Metadata",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "AEMO_DZ_TO_LND",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_ABLB_DropZone_GenericFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": "AEMO/NEM12",
+							"ds_param_container": "landing",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "If Condition1",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Get_Folder_Metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@empty(activity('Get_Folder_Metadata').output.childItems)",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Run_AEMOLoad",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "AEMOLoad",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "NOTIFICATION_ON_SUCCESS",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "AEMO_no_new_files_toload",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Ingestion_AEMO_copy1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Get_Folder_Metadata",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "Get_Folder_Metadata",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"concurrency": 1,
+		"parameters": {
+			"mpl_param_archive_Path": {
+				"type": "string",
+				"defaultValue": "yyyy/mm-mmm/dd"
+			}
+		},
+		"variables": {
+			"varFileMetadataCount": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/RetailUseCase"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,34 @@
+{
+	"name": "LS_BOM_SFTP",
+	"properties": {
+		"annotations": [],
+		"type": "Sftp",
+		"typeProperties": {
+			"host": "sftp-reg.cloud.bom.gov.au",
+			"port": 22,
+			"skipHostKeyValidation": true,
+			"authenticationType": "SshPublicKey",
+			"userName": "bom1312",
+			"privateKeyContent": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AKV_AA_KV01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "cleanco-bom-ssh-private-key"
+			},
+			"passPhrase": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AKV_AA_KV01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "bom-ssh-private-key-passphrase"
+			}
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

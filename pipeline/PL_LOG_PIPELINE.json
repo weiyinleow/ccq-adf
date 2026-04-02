@@ -1,0 +1,190 @@
+{
+	"name": "PL_LOG_PIPELINE",
+	"properties": {
+		"activities": [
+			{
+				"name": "getPipelineDetails",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "GetPipelineSummary",
+					"body": {
+						"value": "{\n  \"runId\": \"@{pipeline().parameters.pl_param_pipelineRunId}\"\n}",
+						"type": "Expression"
+					},
+					"method": "POST"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AFUNC_DatalakeFramework",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "logPipelineCompletion",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "getPipelineDetails",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[CTL].[USP_LOG_PIPELINE_COMPLETE]",
+					"storedProcedureParameters": {
+						"pipelineId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_pipelineId",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"status": {
+							"value": {
+								"value": "@activity('getPipelineDetails').output.response.status",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB01",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "postProcessingPerStatus",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "logPipelineCompletion",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@toLower(activity('getPipelineDetails').output.response.status)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "failed",
+							"activities": [
+								{
+									"name": "getErrorDetails",
+									"type": "AzureFunctionActivity",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"functionName": "GetPipelineErrorDetail",
+										"body": {
+											"value": "{\n  \"runId\": \"@{pipeline().parameters.pl_param_pipelineRunId}\"\n}",
+											"type": "Expression"
+										},
+										"method": "POST"
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_AFUNC_DatalakeFramework",
+										"type": "LinkedServiceReference"
+									}
+								},
+								{
+									"name": "logErrorDetails",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "getErrorDetails",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[CTL].[USP_LOG_ERROR]",
+										"storedProcedureParameters": {
+											"errorDetail": {
+												"value": {
+													"value": "@string(activity('getErrorDetails').output.response)",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pipelineID": {
+												"value": {
+													"value": "@pipeline().parameters.pl_param_pipelineId",
+													"type": "Expression"
+												},
+												"type": "Int32"
+											},
+											"pipelineRunId": {
+												"value": {
+													"value": "@activity('getPipelineDetails').output.response.invokedByRunId",
+													"type": "Expression"
+												},
+												"type": "Guid"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_SQL_ELTFrameworkDB01",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_pipelineId": {
+				"type": "int"
+			},
+			"pl_param_pipelineRunId": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/Utility"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

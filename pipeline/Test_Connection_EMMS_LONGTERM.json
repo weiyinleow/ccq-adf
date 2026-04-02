@@ -1,0 +1,99 @@
+{
+	"name": "Test_Connection_EMMS_LONGTERM",
+	"properties": {
+		"activities": [
+			{
+				"name": "EMMS_LONGTERM to Landing",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT TOP 10 * FROM [emms].[SETGENDATA]",
+						"queryTimeout": "02:00:00",
+						"isolationLevel": "ReadUncommitted",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SQL_AzureSQLDatabase",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_tableSchema": {
+								"value": "@pipeline().parameters.param_tableSchema",
+								"type": "Expression"
+							},
+							"ds_param_tableName": {
+								"value": "@pipeline().parameters.param_tableName",
+								"type": "Expression"
+							},
+							"ls_param_serverName": {
+								"value": "@pipeline().parameters.param_serverName",
+								"type": "Expression"
+							},
+							"ls_param_databaseName": {
+								"value": "@pipeline().parameters.param_databaseName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericParquet_TestFiles",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"parameters": {
+			"param_serverName": {
+				"type": "string",
+				"defaultValue": "cql-dev.database.windows.net"
+			},
+			"param_tableSchema": {
+				"type": "string",
+				"defaultValue": "emms"
+			},
+			"param_tableName": {
+				"type": "string",
+				"defaultValue": "SETGENDATA"
+			},
+			"param_databaseName": {
+				"type": "string",
+				"defaultValue": "EMMS_LONGTERM"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/ConnectionTesting"
+		},
+		"annotations": []
+	}
+}

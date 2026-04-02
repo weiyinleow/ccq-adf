@@ -1,0 +1,31 @@
+{
+	"name": "AEMO_PIPELINE",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute Main Pipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_MAIN",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_loadToken": "AEMO",
+						"pl_param_parentPipeline": "AEMO_PIPELINE"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "1 - Orchestration"
+		},
+		"annotations": []
+	}
+}

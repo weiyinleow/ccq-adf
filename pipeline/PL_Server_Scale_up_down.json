@@ -1,0 +1,59 @@
+{
+	"name": "PL_Server_Scale_up_down",
+	"properties": {
+		"activities": [
+			{
+				"name": "SQLPool_Scale_up_down",
+				"description": "Dedicated SQL Server Scaling",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "PUT",
+					"headers": {
+						"Content-Type": {
+							"value": "application/json",
+							"type": "Expression"
+						}
+					},
+					"url": {
+						"value": "@concat('https://management.azure.com/subscriptions/',pipeline().globalParameters.param_SubscriptionID,'/resourceGroups/',pipeline().globalParameters.param_ResourceGroup,'/providers/Microsoft.Synapse/workspaces/',pipeline().globalParameters.param_synapse_WorkspaceName,'/sqlPools/',pipeline().globalParameters.param_synapse_SQLPoolName,'?api-version=2021-06-01-preview')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"value": "@concat('{ \"location\": \"australiaeast\", \"sku\": {\"name\": \"',pipeline().parameters.pl_param_scale,'\"} }')",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": {
+							"value": "https://management.azure.com/",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_scale": {
+				"type": "string",
+				"defaultValue": "DW400c"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/Utility"
+		},
+		"annotations": []
+	}
+}

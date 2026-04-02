@@ -1,0 +1,39 @@
+{
+	"name": "DS_SNK_Filesystem_ADSL_Generic_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Landing",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": {
+					"value": "@dataset().ds_param_endPoint",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_endPoint": {
+				"type": "string",
+				"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+			}
+		},
+		"folder": {
+			"name": "2b - Datalake"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "AEMO_zip",
+					"type": "Expression"
+				},
+				"fileSystem": "drop-zone"
+			},
+			"compression": {
+				"type": "ZipDeflate"
+			}
+		}
+	}
+}

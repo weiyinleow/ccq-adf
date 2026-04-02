@@ -1,0 +1,24 @@
+{
+	"name": "LS_SQL_Synapse01",
+	"properties": {
+		"parameters": {
+			"ls_param_serverName": {
+				"type": "string",
+				"defaultValue": "cql-dev-datahub-synapse01.sql.azuresynapse.net"
+			},
+			"ls_param_databaseName": {
+				"type": "string",
+				"defaultValue": "cqldevdatahubdsql01"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlDW",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName}"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

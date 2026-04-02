@@ -1,0 +1,30 @@
+{
+	"name": "DEMO_INGEST_CHRIS",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute PL_INGEST_MAIN",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_MAIN",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_loadToken": "SomeToken"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "1 - Orchestration"
+		},
+		"annotations": []
+	}
+}

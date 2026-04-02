@@ -1,0 +1,375 @@
+{
+	"name": "CPRS_Ingest",
+	"properties": {
+		"activities": [
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "CPRS_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "cprs_bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "CopyToDateLake",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "cprs_bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Copy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CopyToDateLake",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "CPRS_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_cprs_bronze",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "cprs_bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "CPRS_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "cprs_silver",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "CPRS_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "cprs_silver",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "cprs_bronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "cprs_silver",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_cprs_silver",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "cprs_silver",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "CPRS_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CopyToDateLake",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SQL_AzureSQLDatabase_CPRS",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_tableSchema": {
+								"value": "@pipeline().parameters.TableSchema",
+								"type": "Expression"
+							},
+							"ds_param_tableName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_Filesystem_ADLS_GenericParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@concat('cprs/',pipeline().parameters.TableName)",
+								"type": "Expression"
+							},
+							"ds_param_fileName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							},
+							"ds_filesystem": "raw"
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"TableSchema": {
+				"type": "string",
+				"defaultValue": "dbo"
+			},
+			"TableName": {
+				"type": "string",
+				"defaultValue": "tblproductiondata"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/CPRS"
+		},
+		"annotations": []
+	}
+}

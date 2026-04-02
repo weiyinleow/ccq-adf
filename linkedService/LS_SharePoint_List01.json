@@ -1,0 +1,24 @@
+{
+	"name": "LS_SharePoint_List01",
+	"properties": {
+		"annotations": [],
+		"type": "SharePointOnlineList",
+		"typeProperties": {
+			"siteUrl": "https://cleancoqueensland.sharepoint.com/sites/app-DataHub",
+			"tenantId": "22a3df9b-ba07-4cf7-97c5-5dd4ff48c62f",
+			"servicePrincipalId": "dfb31466-fdbf-4d64-9d83-f1cad12b25e1",
+			"servicePrincipalKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AKV_AA_KV01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "SharePointApplicationKey"
+			}
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

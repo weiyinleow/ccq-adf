@@ -1,0 +1,19 @@
+{
+	"name": "LS_ABLB_Landing",
+	"properties": {
+		"description": "To drop later",
+		"parameters": {
+			"ls_param_endpoint": {
+				"type": "string",
+				"defaultValue": "https://cqldevdatahubdata.blob.core.windows.net"
+			}
+		},
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"serviceEndpoint": "@{linkedService().ls_param_endpoint}",
+			"accountKind": "StorageV2"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

@@ -1,0 +1,876 @@
+{
+	"name": "PL_INGEST_WORKER_SRC_TO_LND_AzureBlob",
+	"properties": {
+		"description": "Retrieve last modified date end to decide the starting point...if no value 1900-01-01 will be used.",
+		"activities": [
+			{
+				"name": "logWorkerStart",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[CTL].[USP_LOG_WORKER_RUNNING]",
+					"storedProcedureParameters": {
+						"callingPipelineId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_pipelineId",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"callingPipelineRunId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_pipelineRunId",
+								"type": "Expression"
+							},
+							"type": "Guid"
+						},
+						"workerName": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"workerRunId": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "Guid"
+						},
+						"workerType": {
+							"value": "Ingest",
+							"type": "String"
+						},
+						"loadSetItemId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "switchLoadPreProcessing",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "logWorkerStart",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@toLower(pipeline().parameters.pl_param_item.LOAD_TYPE)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "delta",
+							"activities": [
+								{
+									"name": "setVarMinDeltaValue",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "LookupLastDeltaValue",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "minDeltaValue",
+										"value": {
+											"value": "@activity('LookupLastDeltaValue').output.firstRow.FILE_MODIFIED_DATE_END",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "LookupLastDeltaValue",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderStoredProcedureName": "[CTL].[USP_DELTA_VALUE_FILE_INGEST_INITIALISE]",
+											"storedProcedureParameters": {
+												"delta_type": {
+													"type": "String",
+													"value": {
+														"value": "@pipeline().parameters.pl_param_item.DELTA_TYPE",
+														"type": "Expression"
+													}
+												},
+												"loadset_id": {
+													"type": "Int32",
+													"value": {
+														"value": "@pipeline().parameters.pl_param_loadConfig.LOADSET_ID",
+														"type": "Expression"
+													}
+												},
+												"loadset_item_id": {
+													"type": "Int32",
+													"value": {
+														"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+														"type": "Expression"
+													}
+												},
+												"source_type": {
+													"type": "String",
+													"value": {
+														"value": "@pipeline().parameters.pl_param_item.SOURCE_TYPE",
+														"type": "Expression"
+													}
+												}
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+											"type": "DatasetReference"
+										}
+									}
+								},
+								{
+									"name": "IntializeVarMaxDeltaValue",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "setVarMinDeltaValue",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "maxDeltaValue",
+										"value": {
+											"value": "@variables('minDeltaValue')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					],
+					"defaultActivities": [
+						{
+							"name": "IntializeVarMaxDeltaValue_minus30",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "IntializeVarMinDeltaValue_minus30",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "maxDeltaValue",
+								"value": {
+									"value": "@variables('minDeltaValue')",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "IntializeVarMinDeltaValue_minus30",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "minDeltaValue",
+								"value": {
+									"value": "@adddays(utcNow(),-30,'yyyy-MM-dd')",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "GetFileList",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "switchLoadPreProcessing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_ABLB_DropZone_GenericFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pl_param_item.SOURCE_PATH",
+								"type": "Expression"
+							},
+							"ds_param_fileName": {
+								"value": "@pipeline().parameters.pl_param_item.SOURCE_FILE",
+								"type": "Expression"
+							},
+							"ds_param_container": "drop-zone",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"modifiedDatetimeStart": {
+							"value": "@convertToUtc(variables('minDeltaValue'),'AUS Eastern Standard Time')",
+							"type": "Expression"
+						},
+						"modifiedDatetimeEnd": {
+							"value": "@utcnow()",
+							"type": "Expression"
+						},
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEachFile",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "SetVarFileList",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('FileMetadataList')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "GetLastModifiedDate",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pl_param_item.SOURCE_PATH",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@item().name",
+											"type": "Expression"
+										},
+										"ds_param_container": "drop-zone",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"lastModified",
+									"itemName"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						},
+						{
+							"name": "IfFileDateHigherThanDeltaMax",
+							"description": "Check if the file date is higher and then set the delta max accordingly.",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "GetLastModifiedDate",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@greater(\n    ticks(activity('GetLastModifiedDate').output.lastModified), \n    ticks(variables('maxDeltaValue'))\n    )",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "SetMaxDeltaDate",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "maxDeltaValue",
+											"value": {
+												"value": "@activity('GetLastModifiedDate').output.lastModified",
+												"type": "Expression"
+											}
+										}
+									}
+								]
+							}
+						},
+						{
+							"name": "SetFileName",
+							"description": "Could throw this away later...would not work in a parallel situation.",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "IfFileDateHigherThanDeltaMax",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "CurrentFile",
+								"value": {
+									"value": "@activity('GetLastModifiedDate').output.itemName",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "SwitchSourceType",
+							"type": "Switch",
+							"dependsOn": [
+								{
+									"activity": "SetFileName",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@pipeline().parameters.pl_param_item.SOURCE_TYPE",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "xml",
+										"activities": [
+											{
+												"name": "Copy XML data",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "BinarySource",
+														"storeSettings": {
+															"type": "AzureBlobFSReadSettings",
+															"recursive": true
+														},
+														"formatSettings": {
+															"type": "BinaryReadSettings"
+														}
+													},
+													"sink": {
+														"type": "BinarySink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														}
+													},
+													"enableStaging": false
+												},
+												"inputs": [
+													{
+														"referenceName": "DS_ABLB_DropZone_GenericFile",
+														"type": "DatasetReference",
+														"parameters": {
+															"ds_param_folder": {
+																"value": "@pipeline().parameters.pl_param_item.SOURCE_PATH",
+																"type": "Expression"
+															},
+															"ds_param_fileName": {
+																"value": "@item().name",
+																"type": "Expression"
+															},
+															"ds_param_container": "drop-zone",
+															"ds_param_endPoint": {
+																"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "DS_ABLB_DropZone_GenericFile",
+														"type": "DatasetReference",
+														"parameters": {
+															"ds_param_folder": {
+																"value": "@pipeline().parameters.pl_param_item.SOURCE_PATH",
+																"type": "Expression"
+															},
+															"ds_param_fileName": {
+																"value": "@item().name",
+																"type": "Expression"
+															},
+															"ds_param_container": "landing"
+														}
+													}
+												]
+											},
+											{
+												"name": "initLandingFileXML",
+												"type": "Lookup",
+												"dependsOn": [
+													{
+														"activity": "Copy XML data",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "AzureSqlSource",
+														"sqlReaderStoredProcedureName": "[CTL].[USP_LANDING_FILE_INITIALISE]",
+														"storedProcedureParameters": {
+															"FILE_NAME": {
+																"type": "String",
+																"value": {
+																	"value": "@{trim(toUpper(pipeline().parameters.pl_param_item.TARGET_TABLE))}__@{trim(pipeline().parameters.pl_param_item.LOAD_TYPE)}_@{pipeline().RunId}_@{formatDateTime(activity('GetLastModifiedDate').output.lastModified,'yyyyMMdd_HHMMss')}.xml",
+																	"type": "Expression"
+																}
+															},
+															"INGEST_DATETIME": {
+																"type": "DateTime",
+																"value": {
+																	"value": "@utcNow()",
+																	"type": "Expression"
+																}
+															},
+															"LOADSET_ITEM_ID": {
+																"type": "Int32",
+																"value": {
+																	"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+																	"type": "Expression"
+																}
+															}
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "None"
+													},
+													"dataset": {
+														"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+														"type": "DatasetReference"
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "csv",
+										"activities": [
+											{
+												"name": "Copy CSV data",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "DelimitedTextSource",
+														"storeSettings": {
+															"type": "AzureBlobStorageReadSettings",
+															"recursive": true,
+															"enablePartitionDiscovery": false
+														},
+														"formatSettings": {
+															"type": "DelimitedTextReadSettings"
+														}
+													},
+													"sink": {
+														"type": "DelimitedTextSink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														},
+														"formatSettings": {
+															"type": "DelimitedTextWriteSettings",
+															"quoteAllText": true,
+															"fileExtension": ".txt"
+														}
+													},
+													"enableStaging": false,
+													"translator": {
+														"type": "TabularTranslator",
+														"typeConversion": true,
+														"typeConversionSettings": {
+															"allowDataTruncation": true,
+															"treatBooleanAsNumber": false
+														}
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "DS_ABLB_DropZone_GenericCsvFIle",
+														"type": "DatasetReference",
+														"parameters": {
+															"ds_param_endPoint": {
+																"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+																"type": "Expression"
+															},
+															"ds_param_container": "DropZone",
+															"ds_param_folder": {
+																"value": "@pipeline().parameters.pl_param_item.SOURCE_PATH",
+																"type": "Expression"
+															},
+															"ds_param_fileName": {
+																"value": "@item().name",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "DS_SNK_ADLS_GenericCsvFile",
+														"type": "DatasetReference",
+														"parameters": {
+															"ds_param_endPoint": {
+																"value": "@pipeline().globalParameters.param_dl_storage_endpoint",
+																"type": "Expression"
+															},
+															"ds_param_folder": {
+																"value": "@concat(trim(pipeline().parameters.pl_param_item.SOURCE_SCHEMA),\n'/',\ntrim(pipeline().parameters.pl_param_item.SOURCE_NAME))",
+																"type": "Expression"
+															},
+															"ds_param_fileName": {
+																"value": "@{trim(toUpper(pipeline().parameters.pl_param_item.TARGET_TABLE))}__@{trim(pipeline().parameters.pl_param_item.LOAD_TYPE)}_@{pipeline().RunId}_@{formatDateTime(activity('GetLastModifiedDate').output.lastModified,'yyyyMMdd_HHMMss')}.csv",
+																"type": "Expression"
+															},
+															"ds_param_fileSystem": {
+																"value": "@{trim(pipeline().parameters.pl_param_loadConfig.LANDING_PATH)}",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											},
+											{
+												"name": "initLandingFileCSV",
+												"type": "Lookup",
+												"dependsOn": [
+													{
+														"activity": "Copy CSV data",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "AzureSqlSource",
+														"sqlReaderStoredProcedureName": "[CTL].[USP_LANDING_FILE_INITIALISE]",
+														"storedProcedureParameters": {
+															"FILE_NAME": {
+																"type": "String",
+																"value": {
+																	"value": "@{trim(toUpper(pipeline().parameters.pl_param_item.TARGET_TABLE))}__@{trim(pipeline().parameters.pl_param_item.LOAD_TYPE)}_@{pipeline().RunId}_@{formatDateTime(activity('GetLastModifiedDate').output.lastModified,'yyyyMMdd_HHMMss')}.csv",
+																	"type": "Expression"
+																}
+															},
+															"INGEST_DATETIME": {
+																"type": "DateTime",
+																"value": {
+																	"value": "@utcNow()",
+																	"type": "Expression"
+																}
+															},
+															"LOADSET_ITEM_ID": {
+																"type": "Int32",
+																"value": {
+																	"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+																	"type": "Expression"
+																}
+															}
+														},
+														"queryTimeout": "02:00:00",
+														"partitionOption": "None"
+													},
+													"dataset": {
+														"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+														"type": "DatasetReference"
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "SetVarFileList",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "GetFileList",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "FileMetadataList",
+					"value": {
+						"value": "@activity('GetFileList').output.childItems",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "switchLoadPostProcessing",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "ForEachFile",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@toLower(pipeline().parameters.pl_param_item.LOAD_TYPE)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "delta",
+							"activities": [
+								{
+									"name": "updateDeltaValues",
+									"description": "Potentially could bump up the date by a second or micro-second to avoid reprocessing the file...However the assumption is the next drop would archive or clear the file.",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[CTL].[USP_DELTA_VALUE_FILE_INGEST_UPDATE]",
+										"storedProcedureParameters": {
+											"delta_timestamp": {
+												"value": {
+													"value": "@variables('maxDeltaValue')",
+													"type": "Expression"
+												},
+												"type": "DateTime"
+											},
+											"delta_type": {
+												"value": {
+													"value": "@pipeline().parameters.pl_param_item.DELTA_TYPE",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"loadset_id": {
+												"value": {
+													"value": "@pipeline().parameters.pl_param_loadConfig.LOADSET_ID",
+													"type": "Expression"
+												},
+												"type": "Int32"
+											},
+											"loadset_item_id": {
+												"value": {
+													"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+													"type": "Expression"
+												},
+												"type": "Int32"
+											},
+											"source_type": {
+												"value": {
+													"value": "@pipeline().parameters.pl_param_item.SOURCE_TYPE",
+													"type": "Expression"
+												},
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_SQL_ELTFrameworkDB",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_item": {
+				"type": "object"
+			},
+			"pl_param_sourceConfig": {
+				"type": "object"
+			},
+			"pl_param_pipelineId": {
+				"type": "string"
+			},
+			"pl_param_pipelineRunId": {
+				"type": "string"
+			},
+			"pl_param_loadConfig": {
+				"type": "object"
+			}
+		},
+		"variables": {
+			"maxDeltaValue": {
+				"type": "String"
+			},
+			"minDeltaValue": {
+				"type": "String"
+			},
+			"FileMetadataList": {
+				"type": "Array"
+			},
+			"CurrentFile": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+		},
+		"annotations": []
+	}
+}

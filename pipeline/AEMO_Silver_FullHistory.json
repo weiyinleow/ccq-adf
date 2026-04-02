@@ -1,0 +1,162 @@
+{
+	"name": "AEMO_Silver_FullHistory",
+	"properties": {
+		"activities": [
+			{
+				"name": "AEMO_Silver_FullHistory",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_Silver_FullHistory",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool03",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Large"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Silver_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Silver_FullHistory",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Silver_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SOLAR_Bronze_copy5",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Silver_FullHistory",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Silver_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "2 - DataHubPipelines/RetailUseCase/SubPipelines"
+		},
+		"annotations": []
+	}
+}

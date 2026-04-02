@@ -1,0 +1,32 @@
+{
+	"name": "SANITY_CHECK_AdventureWorksToSQL",
+	"properties": {
+		"activities": [
+			{
+				"name": "executePipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_MAIN",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_loadToken": "AdventureWorks_SalesLT"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "1 - Orchestration"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:22Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

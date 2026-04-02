@@ -1,0 +1,39 @@
+{
+	"name": "DS_SNK_ADSL_MSATS_CNPR_ParquetFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_DataLake",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ds_param_container": {
+				"type": "string",
+				"defaultValue": "raw"
+			},
+			"ds_param_folder": {
+				"type": "string",
+				"defaultValue": "AEMO/msats_snapshots/msats_nmi_role"
+			}
+		},
+		"folder": {
+			"name": "1 - Files"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().ds_param_folder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().ds_param_container",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

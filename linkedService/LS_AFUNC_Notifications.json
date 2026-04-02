@@ -1,0 +1,23 @@
+{
+	"name": "LS_AFUNC_Notifications",
+	"properties": {
+		"annotations": [],
+		"type": "AzureFunction",
+		"typeProperties": {
+			"functionAppUrl": "https://cqldevdatahub-core-framework.azurewebsites.net",
+			"authentication": "Anonymous",
+			"functionKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AKV_AA_KV01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "function-key-core-framework"
+			}
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

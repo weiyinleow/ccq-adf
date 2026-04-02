@@ -1,0 +1,601 @@
+{
+	"name": "AEMO_MSATS_Snapshot_CMR_XMLtoParquet",
+	"properties": {
+		"activities": [
+			{
+				"name": "MSATS_Snapshot_CMR_FileCopy",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "XmlSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.xml",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "XmlReadSettings",
+							"validationMode": "none",
+							"namespaces": true
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "['SequenceNumber']"
+								},
+								"sink": {
+									"name": "SequenceNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CreationDate']"
+								},
+								"sink": {
+									"name": "CreationDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['MaintenanceDate']"
+								},
+								"sink": {
+									"name": "MaintenanceDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['RowStatus']"
+								},
+								"sink": {
+									"name": "RowStatus",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['FromDate']"
+								},
+								"sink": {
+									"name": "FromDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['ToDate']"
+								},
+								"sink": {
+									"name": "ToDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['NMI']"
+								},
+								"sink": {
+									"name": "NMI",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['SerialNumber']"
+								},
+								"sink": {
+									"name": "SerialNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['NextScheduledReadDate']"
+								},
+								"sink": {
+									"name": "NextScheduledReadDate",
+									"type": "Date"
+								}
+							},
+							{
+								"source": {
+									"path": "['Location']"
+								},
+								"sink": {
+									"name": "Location",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Hazard']"
+								},
+								"sink": {
+									"name": "Hazard",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['InstallationTypeCode']"
+								},
+								"sink": {
+									"name": "InstallationTypeCode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Use']"
+								},
+								"sink": {
+									"name": "Use",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Manufacturer']"
+								},
+								"sink": {
+									"name": "Manufacturer",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Model']"
+								},
+								"sink": {
+									"name": "Model",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['LastTestDate']"
+								},
+								"sink": {
+									"name": "LastTestDate",
+									"type": "Date"
+								}
+							},
+							{
+								"source": {
+									"path": "['TestResult']"
+								},
+								"sink": {
+									"name": "TestResult",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['ReadTypeCode']"
+								},
+								"sink": {
+									"name": "ReadTypeCode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Status']"
+								},
+								"sink": {
+									"name": "Status",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CurrentTransformerLocation']"
+								},
+								"sink": {
+									"name": "CurrentTransformerLocation",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CurrentTransformerType']"
+								},
+								"sink": {
+									"name": "CurrentTransformerType",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CurrentTransformerRatioAvailable']"
+								},
+								"sink": {
+									"name": "CurrentTransformerRatioAvailable",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CurrentTransformerRatioConnected']"
+								},
+								"sink": {
+									"name": "CurrentTransformerRatioConnected",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CurrentTransformerAccuracyClass']"
+								},
+								"sink": {
+									"name": "CurrentTransformerAccuracyClass",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CurrentTransformerTest']"
+								},
+								"sink": {
+									"name": "CurrentTransformerTest",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CurrentTransformerTestDate']"
+								},
+								"sink": {
+									"name": "CurrentTransformerTestDate",
+									"type": "Date"
+								}
+							},
+							{
+								"source": {
+									"path": "['GPSCoordinates']['Latitude']"
+								},
+								"sink": {
+									"name": "Latitude",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['GPSCoordinates']['Longitude']"
+								},
+								"sink": {
+									"name": "Longitude",
+									"type": "Decimal"
+								}
+							},
+							{
+								"source": {
+									"path": "['VoltageTransformerLocation']"
+								},
+								"sink": {
+									"name": "VoltageTransformerLocation",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['VoltageTransformerType']"
+								},
+								"sink": {
+									"name": "VoltageTransformerType",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['VoltageTransformerRatio']"
+								},
+								"sink": {
+									"name": "VoltageTransformerRatio",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['VoltageTransformerAccuracyClass']"
+								},
+								"sink": {
+									"name": "VoltageTransformerAccuracyClass",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['VoltageTransformerTest']"
+								},
+								"sink": {
+									"name": "VoltageTransformerTest",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['VoltageTransformerTestDate']"
+								},
+								"sink": {
+									"name": "VoltageTransformerTestDate",
+									"type": "Date"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportParameters']['Participant']"
+								},
+								"sink": {
+									"name": "ParticipantId",
+									"type": "String"
+								}
+							}
+						],
+						"collectionReference": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportResults']['ReplicationBlock']['Row']"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SRC_ADSL_MSATS_SnapshotXmlFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_container": {
+								"value": "@pipeline().parameters.pl_param_container",
+								"type": "Expression"
+							},
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pl_param_folder",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADSL_MSATS_CMR_ParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_container": "raw",
+							"ds_param_folder": "AEMO/msats_snapshots/msats_nmi_meters"
+						}
+					}
+				]
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Snapshot_Refresh",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_MSATS_Snapshot_Copy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "MSATS_Snapshot_CMR_FileCopy",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Snapshot_Copy",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_Bronze_NMI_METERS_FullHistory",
+				"description": "Removes unwanted files.",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "MSATS_Snapshot_CMR_FileCopy",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_Bronze_NMI_METERS_FullHistory",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Bronze_NMI_METERS_FullHistory",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Bronze_NMI_METERS_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_NMI_METERS_FullHistory",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Bronze_NMI_METERS_FullHistory",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Bronze_NMI_METERS_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_container": {
+				"type": "string",
+				"defaultValue": "drop-zone"
+			},
+			"pl_param_folder": {
+				"type": "string",
+				"defaultValue": "aemo/msats_snapshots/nmimeters"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/RetailUseCaseMSATS/SubPipelines"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,103 @@
+{
+	"name": "PL_SHIR_VM_START",
+	"properties": {
+		"activities": [
+			{
+				"name": "getShirVmList",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": false,
+							"enablePartitionDiscovery": false
+						}
+					},
+					"dataset": {
+						"referenceName": "DS_CFG_ADLS_ShirVmList",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "forEachShirVm",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "getShirVmList",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('getShirVmList').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 10,
+					"activities": [
+						{
+							"name": "azureVmStart",
+							"type": "WebHook",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": "https://s19events.azure-automation.net/webhooks?token=ArBScbXmcZPAxsBIexLG6P%2f44vJdcaJwl3oQET6TL44%3d",
+								"method": "POST",
+								"headers": {
+									"message": "StartedbyMMG"
+								},
+								"body": {
+									"ResourceGroup": "@{item().resourceGroup}",
+									"Name": "@{item().vmName}",
+									"StartStop": "Start"
+								},
+								"timeout": "00:10:00",
+								"reportStatusOnCallBack": false
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "waitForShirToStart",
+				"type": "Wait",
+				"dependsOn": [
+					{
+						"activity": "forEachShirVm",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"waitTimeInSeconds": 120
+				}
+			}
+		],
+		"folder": {
+			"name": "99 - Framework Components/Utility"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

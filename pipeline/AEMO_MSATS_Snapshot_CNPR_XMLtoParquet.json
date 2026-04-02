@@ -1,0 +1,376 @@
+{
+	"name": "AEMO_MSATS_Snapshot_CNPR_XMLtoParquet",
+	"properties": {
+		"activities": [
+			{
+				"name": "MSATS_Snapshot_CNPR_FileCopy",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "XmlSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.xml",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "XmlReadSettings",
+							"validationMode": "none",
+							"namespaces": true
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "['SequenceNumber']"
+								},
+								"sink": {
+									"name": "SequenceNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CreationDate']"
+								},
+								"sink": {
+									"name": "CreationDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['MaintenanceDate']"
+								},
+								"sink": {
+									"name": "MaintenanceDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['RowStatus']"
+								},
+								"sink": {
+									"name": "RowStatus",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['FromDate']"
+								},
+								"sink": {
+									"name": "FromDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['ToDate']"
+								},
+								"sink": {
+									"name": "ToDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['NMI']"
+								},
+								"sink": {
+									"name": "NMI",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Party']"
+								},
+								"sink": {
+									"name": "Party",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Role']"
+								},
+								"sink": {
+									"name": "Role",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportParameters']['Participant']"
+								},
+								"sink": {
+									"name": "ParticipantId",
+									"type": "String"
+								}
+							}
+						],
+						"collectionReference": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportResults']['ReplicationBlock']['Row']"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SRC_ADSL_MSATS_SnapshotXmlFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_container": {
+								"value": "@pipeline().parameters.pl_param_container",
+								"type": "Expression"
+							},
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pl_param_folder",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADSL_MSATS_CNPR_ParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_container": "raw",
+							"ds_param_folder": "AEMO/msats_snapshots/msats_nmi_role"
+						}
+					}
+				]
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Snapshot_Refresh",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_MSATS_Snapshot_Copy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "MSATS_Snapshot_CNPR_FileCopy",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Snapshot_Copy",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_Bronze_NMI_ROLE_FullHistory",
+				"description": "Removes unwanted files.",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "MSATS_Snapshot_CNPR_FileCopy",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_Bronze_NMI_ROLE_FullHistory",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Bronze_NMI_ROLE_FullHistory",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Bronze_NMI_ROLE_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_NMI_ROLE_FullHistory",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Bronze_NMI_ROLE_FullHistory",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Bronze_NMI_ROLE_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_container": {
+				"type": "string",
+				"defaultValue": "drop-zone"
+			},
+			"pl_param_folder": {
+				"type": "string",
+				"defaultValue": "aemo/msats_snapshots/nmiroles"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/RetailUseCaseMSATS/SubPipelines"
+		},
+		"annotations": []
+	}
+}

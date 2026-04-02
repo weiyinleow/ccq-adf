@@ -1,0 +1,38 @@
+{
+	"name": "LandingFilesFlow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "LS_SQL_ELTFrameworkDB01",
+						"type": "LinkedServiceReference"
+					},
+					"name": "LandingFileTransformation"
+				}
+			],
+			"sinks": [
+				{
+					"name": "LandingFileSink"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'query',",
+				"     store: 'sqlserver',",
+				"     query: 'SELECT [FILE_NAME] FROM [CTL].CFG_LANDING_FILE ',",
+				"     isolationLevel: 'READ_UNCOMMITTED') ~> LandingFileTransformation",
+				"LandingFileTransformation sink(validateSchema: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     store: 'cache',",
+				"     format: 'inline',",
+				"     output: true,",
+				"     saveOrder: 1) ~> LandingFileSink"
+			]
+		}
+	}
+}

@@ -1,0 +1,54 @@
+{
+	"name": "PL_TEAMS_NOTIF_ON_SUCCESS",
+	"properties": {
+		"activities": [
+			{
+				"name": "PL_SEND_NOTIFICATION",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "SendTeamsNotification",
+					"body": {
+						"value": "{\n\t\"ChannelKeys\": [\"@{pipeline().parameters.pl_param_NotificationChannel}\"],\n\t\"Title\": \"Pipeline Success!\",\t\n\t\"Subtitle\": \"Pipeline Run Succeeded -  @{pipeline().parameters.pl_param_MartName}\",\n\t\"BodyText\":\"The @{pipeline().parameters.pl_param_PipeLineName} has completed successfully. Please check ADF logs for further details.\",\n\t\"Facts\": {\n\t\t\t\"Pipeline Name\":\"@{pipeline().parameters.pl_param_PipeLineName}\",\n\t\t\t\"Pipeline ID\":\"@{pipeline().parameters.pl_param_PipelineRunId}\",\n\t\t\t\"Completetion Time (UTC)\":\"@{formatDateTime(utcnow())}\",\n\t\t\t\"Completion Time (AEST)\":\"@{convertTimeZone(utcnow() , 'UTC' , 'E. Australia Standard Time')}\"\n\t}\n}",
+						"type": "Expression"
+					},
+					"method": "POST"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AFUNC_Notifications",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_NotificationChannel": {
+				"type": "string",
+				"defaultValue": "DataHubAlerts"
+			},
+			"pl_param_MartName": {
+				"type": "string",
+				"defaultValue": "TestPipeline"
+			},
+			"pl_param_PipelineRunId": {
+				"type": "string",
+				"defaultValue": "3247923"
+			},
+			"pl_param_PipeLineName": {
+				"type": "string",
+				"defaultValue": "TestPipeline"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/Utility/Teams Alerts"
+		},
+		"annotations": []
+	}
+}

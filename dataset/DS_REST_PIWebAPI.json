@@ -1,0 +1,42 @@
+{
+	"name": "DS_REST_PIWebAPI",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_REST_PIWebAPI",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_adfserviceacct_username": {
+					"value": "@dataset().ds_param_adfserviceacct_username",
+					"type": "Expression"
+				},
+				"ls_param_base_url": {
+					"value": "@dataset().ds_param_base_url",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_relativeURL": {
+				"type": "string"
+			},
+			"ds_param_adfserviceacct_username": {
+				"type": "string"
+			},
+			"ds_param_base_url": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "1 - REST"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@dataset().ds_param_relativeURL",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	}
+}

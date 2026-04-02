@@ -1,0 +1,26 @@
+{
+	"name": "LS_Synapse_Analytics_Artifacts01",
+	"properties": {
+		"parameters": {
+			"ls_param_endpoint": {
+				"type": "string",
+				"defaultValue": "https://cql-dev-datahub-synapse01.dev.azuresynapse.net"
+			},
+			"ls_param_workspace_id": {
+				"type": "string",
+				"defaultValue": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSynapseArtifacts",
+		"typeProperties": {
+			"endpoint": "@{linkedService().ls_param_endpoint}",
+			"authentication": "MSI",
+			"workspaceResourceId": "@{linkedService().ls_param_workspace_id}"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

@@ -1,0 +1,7 @@
+{
+	"name": "cqlsql01-datafactory01-endpoint",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/52427805-cf5b-4ce1-beb7-1005dfb46a64/resourceGroups/CQL-AZUR1-NONPRODDEV01-RG/providers/Microsoft.Sql/servers/cql-dev",
+		"groupId": "sqlServer"
+	}
+}

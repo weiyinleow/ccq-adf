@@ -1,0 +1,101 @@
+{
+	"name": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy_SharePoint_List_To_Csv",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SharePointOnlineListSource",
+						"httpRequestTimeout": "00:05:00"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SharePoint_Generic_List",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_SharePointListName": {
+								"value": "@pipeline().parameters.pl_param_SharePointListName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericCsvFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().parameters.pl_param_endPoint",
+								"type": "Expression"
+							},
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pl_param_folder",
+								"type": "Expression"
+							},
+							"ds_param_fileName": {
+								"value": "@pipeline().parameters.pl_param_fileName",
+								"type": "Expression"
+							},
+							"ds_param_fileSystem": "landing"
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"pl_param_SharePointListName": {
+				"type": "string",
+				"defaultValue": "NP_SPM_Name"
+			},
+			"pl_param_endPoint": {
+				"type": "string",
+				"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+			},
+			"pl_param_folder": {
+				"type": "string",
+				"defaultValue": "SharePoint/SPM_Name"
+			},
+			"pl_param_fileName": {
+				"type": "string",
+				"defaultValue": "SPM_Name.csv"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+		},
+		"annotations": []
+	}
+}

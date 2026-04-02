@@ -1,0 +1,58 @@
+{
+	"name": "PL_ALERT_SEND_EMAILS",
+	"properties": {
+		"activities": [
+			{
+				"name": "forEachEmailAlert",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.pl_param_emailAlerts",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "sendEmail",
+							"type": "AzureFunctionActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"functionName": "SendEmailViaSendGrid",
+								"method": "POST",
+								"body": {
+									"value": "@item()",
+									"type": "Expression"
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LS_AFUNC_DatalakeFramework",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_emailAlerts": {
+				"type": "array"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/Utility"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

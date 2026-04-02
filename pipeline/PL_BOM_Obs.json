@@ -1,0 +1,1177 @@
+{
+	"name": "PL_BOM_Obs",
+	"properties": {
+		"activities": [
+			{
+				"name": "CP_SFTP_to_Dropzone",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "FineName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "SftpReadSettings",
+							"recursive": true,
+							"disableChunking": false
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_BOM_SFTP_File",
+						"type": "DatasetReference",
+						"parameters": {
+							"pDirectory": "@pipeline().parameters.pSftpDirectory",
+							"pFileName": {
+								"value": "@pipeline().parameters.pFileName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ABLB_DropZone_GenericFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pSftpDropzoneRoot",
+								"type": "Expression"
+							},
+							"ds_param_fileName": {
+								"value": "@variables('vNewFileName')",
+								"type": "Expression"
+							},
+							"ds_param_container": "drop-zone",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Observation_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_IF_CP_to_Landing_FTP",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "FTP Route",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Observation_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "GM_Check_SFTP_Folder",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "CP_SFTP_to_Dropzone",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_ABLB_DropZone_GenericFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pSftpDropzoneRoot",
+								"type": "Expression"
+							},
+							"ds_param_fileName": {
+								"value": "@variables('vNewFileName')",
+								"type": "Expression"
+							},
+							"ds_param_container": "drop-zone",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"exists"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "FTP Route",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "GM_Check_SFTP_Folder",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "FTPCopy",
+						"dependencyConditions": [
+							"Completed"
+						]
+					},
+					{
+						"activity": "Set variable FolderTimeString",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(activity('GM_Check_SFTP_Folder').output.exists)",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Delete FTP",
+							"type": "Delete",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "BoM_XML",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_container": "drop-zone",
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pftpDropzoneRoot",
+											"type": "Expression"
+										},
+										"ds_param_filename": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_endpoint": {
+											"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							}
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_Delete_FTP",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Delete FTP",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "BOM_Observation_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "CP_DropzoneFTP_To_Landing",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"deleteFilesAfterCompletion": true
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pftpDropzoneRoot",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_container": "drop-zone",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pLandingRoot",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_container": "landing",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_IF_CP_DropzoneFTP_To_Landing",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "CP_DropzoneFTP_To_Landing",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "BOM_Observation_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "DF_FTPLanding_To_Bronze",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [
+								{
+									"activity": "CP_DropzoneFTP_To_Landing",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "BoM_dataflow",
+									"type": "DataFlowReference",
+									"datasetParameters": {
+										"BomObsSource": {
+											"ds_param_container": "landing",
+											"ds_param_folder": {
+												"value": "@pipeline().parameters.pLandingRoot",
+												"type": "Expression"
+											},
+											"ds_param_filename": {
+												"value": "@variables('vNewFileName')",
+												"type": "Expression"
+											},
+											"ds_param_endpoint": {
+												"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+												"type": "Expression"
+											}
+										}
+									},
+									"linkedServiceParameters": {
+										"BomObsSink": {
+											"linkedService": {
+												"ls_param_endpoint": {
+													"value": "@pipeline().globalParameters.param_dl_storage_endpoint",
+													"type": "Expression"
+												}
+											}
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_DF_LandingFTP_To_Raw",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "DF_FTPLanding_To_Bronze",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "BOM_Observation_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "CP_LandingFTP_To_Archive",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "DF_FTPLanding_To_Bronze",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"deleteFilesAfterCompletion": true
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pLandingRoot",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_container": "landing",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@concat(pipeline().parameters.pLandingRoot, '/', variables('vFolderTimeString'))",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_container": "archive",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_CP_LandingFTP_To_Archive",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "CP_LandingFTP_To_Archive",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "BOM_Observation_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_CP_SFTP_to_Dropzone",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CP_SFTP_to_Dropzone",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Observation_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "FTPCopy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "FineName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "FTPCopy",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pftpDirectory": {
+							"value": "@pipeline().parameters.pftpDirectory",
+							"type": "Expression"
+						},
+						"pftpDropzoneRoot": {
+							"value": "@pipeline().parameters.pftpDropzoneRoot",
+							"type": "Expression"
+						},
+						"pFileName": {
+							"value": "@pipeline().parameters.pFileName",
+							"type": "Expression"
+						},
+						"pNewFileName": {
+							"value": "@variables('vNewFileName')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_IF_CP_to_Landing_SFTP",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "SFTP Route",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Observation_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "SFTP Route",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "GM_Check_SFTP_Folder",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set variable FolderTimeString",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@activity('GM_Check_SFTP_Folder').output.exists",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "CP_DropzoneSFTP_To_Landing",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"deleteFilesAfterCompletion": true
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pSftpDropzoneRoot",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_container": "drop-zone",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pLandingRoot",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_container": "landing",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_IF_CP_DropzoneSFTP_To_Landing",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "CP_DropzoneSFTP_To_Landing",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "BOM_Observation_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "DF_sftpLanding_To_Bronze",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [
+								{
+									"activity": "CP_DropzoneSFTP_To_Landing",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "BoM_dataflow",
+									"type": "DataFlowReference",
+									"datasetParameters": {
+										"BomObsSource": {
+											"ds_param_container": "landing",
+											"ds_param_folder": {
+												"value": "@pipeline().parameters.pLandingRoot",
+												"type": "Expression"
+											},
+											"ds_param_filename": {
+												"value": "@variables('vNewFileName')",
+												"type": "Expression"
+											},
+											"ds_param_endpoint": {
+												"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+												"type": "Expression"
+											}
+										}
+									},
+									"linkedServiceParameters": {
+										"BomObsSink": {
+											"linkedService": {
+												"ls_param_endpoint": {
+													"value": "@pipeline().globalParameters.param_dl_storage_endpoint",
+													"type": "Expression"
+												}
+											}
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								},
+								"traceLevel": "Fine"
+							}
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_DF_LandingSFTP_To_Raw",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "DF_sftpLanding_To_Bronze",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "BOM_Observation_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "CP_LandingSFTP_To_Archive",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "DF_sftpLanding_To_Bronze",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"deleteFilesAfterCompletion": true
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pLandingRoot",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_container": "landing",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@concat(pipeline().parameters.pLandingRoot,variables('vFolderTimeString'))",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vNewFileName')",
+											"type": "Expression"
+										},
+										"ds_param_container": "archive",
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_CP_LandingSFTP_To_Archive",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "CP_LandingSFTP_To_Archive",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "BOM_Observation_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set variable FolderTimeString",
+				"description": "Creates a folder path based on UTC time to be shared by all files being archived.",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vFolderTimeString",
+					"value": {
+						"value": "@concat(\n  '/',\n  formatDateTime(convertTimeZone(utcNow(),'UTC','E. Australia Standard Time'),'yyyy'),'/',\n  formatDateTime(convertTimeZone(utcNow(),'UTC','E. Australia Standard Time'),'MM'),'/',\n  formatDateTime(convertTimeZone(utcNow(),'UTC','E. Australia Standard Time'),'dd'),'/',\n  formatDateTime(convertTimeZone(utcNow(),'UTC','E. Australia Standard Time'),'HH'),'/',\n  formatDateTime(convertTimeZone(utcNow(),'UTC','E. Australia Standard Time'),'mm'),'/',\n  formatDateTime(convertTimeZone(utcNow(),'UTC','E. Australia Standard Time'),'ss'),'/'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "FineName",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vNewFileName",
+					"value": "@concat(\n    replace(pipeline().parameters.pFileName, '.xml', ''),\n    '_',\n    pipeline().RunId,\n    '.xml'\n)"
+				}
+			}
+		],
+		"parameters": {
+			"pSftpDirectory": {
+				"type": "string",
+				"defaultValue": "/register/bom1312/fwo"
+			},
+			"pDatasetName": {
+				"type": "string",
+				"defaultValue": "obs_10min"
+			},
+			"pSftpDropzoneRoot": {
+				"type": "string",
+				"defaultValue": "bom/obs_10min/sftp"
+			},
+			"pLandingRoot": {
+				"type": "string",
+				"defaultValue": "bom/obs_10min"
+			},
+			"pFileName": {
+				"type": "string",
+				"defaultValue": "IDQ60920.xml"
+			},
+			"pftpDirectory": {
+				"type": "string",
+				"defaultValue": "fwo"
+			},
+			"pftpDropzoneRoot": {
+				"type": "string",
+				"defaultValue": "bom/obs_10min/ftp"
+			},
+			"pBronzeRoot": {
+				"type": "string",
+				"defaultValue": "bom/obs_10min"
+			}
+		},
+		"variables": {
+			"vDropFolder": {
+				"type": "String"
+			},
+			"vLandFolder": {
+				"type": "String"
+			},
+			"vRunId": {
+				"type": "String"
+			},
+			"vCandidatesCount": {
+				"type": "String"
+			},
+			"vFolderTimeString": {
+				"type": "String"
+			},
+			"vNewFileName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/BoM"
+		},
+		"annotations": []
+	}
+}

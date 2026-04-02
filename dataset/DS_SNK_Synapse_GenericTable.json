@@ -1,0 +1,43 @@
+{
+	"name": "DS_SNK_Synapse_GenericTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_Synapse01",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_serverName": "@dataset().ls_param_serverName",
+				"ls_param_databaseName": "@dataset().ls_param_databaseName"
+			}
+		},
+		"parameters": {
+			"ls_param_serverName": {
+				"type": "string"
+			},
+			"ls_param_databaseName": {
+				"type": "string"
+			},
+			"ds_param_tableSchema": {
+				"type": "string"
+			},
+			"ds_param_tableName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "3 - Data Warehouse"
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().ds_param_tableSchema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().ds_param_tableName",
+				"type": "Expression"
+			}
+		}
+	}
+}

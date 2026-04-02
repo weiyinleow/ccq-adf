@@ -1,0 +1,24 @@
+{
+	"name": "DS_CFG_ADLS_ShirVmList",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Config",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "99 - Framework Components"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "shirVms.json",
+				"folderPath": "aaEltFramework",
+				"fileSystem": "config"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

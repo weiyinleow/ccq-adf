@@ -1,0 +1,19 @@
+{
+	"name": "LS_SQL_AzureSqlDatabase_CPRS",
+	"properties": {
+		"description": "connects to CPRS Prod server",
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "cql-prd-shared.database.windows.net",
+			"database": "CPRS",
+			"encrypt": "mandatory",
+			"trustServerCertificate": true,
+			"authenticationType": "SystemAssignedManagedIdentity"
+		},
+		"connectVia": {
+			"referenceName": "AutoResolveIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

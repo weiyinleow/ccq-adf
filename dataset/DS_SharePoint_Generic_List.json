@@ -1,0 +1,27 @@
+{
+	"name": "DS_SharePoint_Generic_List",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SharePoint_List01",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ds_param_SharePointListName": {
+				"type": "String",
+				"defaultValue": "NP_SPM_Name"
+			}
+		},
+		"folder": {
+			"name": "1 - Files"
+		},
+		"annotations": [],
+		"type": "SharePointOnlineListResource",
+		"schema": [],
+		"typeProperties": {
+			"listName": {
+				"value": "@dataset().ds_param_SharePointListName",
+				"type": "Expression"
+			}
+		}
+	}
+}

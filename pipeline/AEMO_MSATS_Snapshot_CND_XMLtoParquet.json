@@ -1,0 +1,682 @@
+{
+	"name": "AEMO_MSATS_Snapshot_CND_XMLtoParquet",
+	"properties": {
+		"activities": [
+			{
+				"name": "MSATS_Snapshot_CND_FileCopy",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "XmlSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.xml",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "XmlReadSettings",
+							"validationMode": "none",
+							"namespaces": true
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "MergeFiles"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "['SequenceNumber']"
+								},
+								"sink": {
+									"name": "SequenceNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CreationDate']"
+								},
+								"sink": {
+									"name": "CreationDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['MaintenanceDate']"
+								},
+								"sink": {
+									"name": "MaintenanceDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['RowStatus']"
+								},
+								"sink": {
+									"name": "RowStatus",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['FromDate']"
+								},
+								"sink": {
+									"name": "FromDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['ToDate']"
+								},
+								"sink": {
+									"name": "ToDate",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"path": "['NMI']"
+								},
+								"sink": {
+									"name": "NMI",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['JurisdictionCode']"
+								},
+								"sink": {
+									"name": "JurisdictionCode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['NMIClassificationCode']"
+								},
+								"sink": {
+									"name": "NMIClassificationCode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['TransmissionNodeIdentifier']"
+								},
+								"sink": {
+									"name": "TransmissionNodeIdentifier",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['TransmissionNodeIdentifier2']"
+								},
+								"sink": {
+									"name": "TransmissionNodeIdentifier2",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['DistributionLossFactorCode']"
+								},
+								"sink": {
+									"name": "DistributionLossFactorCode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['ParentEmbeddedNetworkIdentifier']"
+								},
+								"sink": {
+									"name": "ParentEmbeddedNetworkIdentifier",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['ChildEmbeddedNetworkIdentifier']"
+								},
+								"sink": {
+									"name": "ChildEmbeddedNetworkIdentifier",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['BuildingOrPropertyName']"
+								},
+								"sink": {
+									"name": "BuildingName",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['Street']['StreetName']"
+								},
+								"sink": {
+									"name": "StreetName",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['Street']['StreetType']"
+								},
+								"sink": {
+									"name": "StreetType",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['Street']['StreetSuffix']"
+								},
+								"sink": {
+									"name": "StreetSuffix",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['House']['HouseNumber']"
+								},
+								"sink": {
+									"name": "HouseNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['House']['HouseNumberSuffix']"
+								},
+								"sink": {
+									"name": "HouseNumberSuffix",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['House']['HouseNumberTo']"
+								},
+								"sink": {
+									"name": "HouseNumberTo",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['House']['HouseNumberToSuffix']"
+								},
+								"sink": {
+									"name": "HouseNumberToSuffix",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['Lot']['LotNumber']"
+								},
+								"sink": {
+									"name": "LotNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['FlatOrUnit']['FlatOrUnitType']"
+								},
+								"sink": {
+									"name": "FlatType",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['FlatOrUnit']['FlatOrUnitNumber']"
+								},
+								"sink": {
+									"name": "FlatNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['FloorOrLevel']['FloorOrLevelNumber']"
+								},
+								"sink": {
+									"name": "FloorNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['FloorOrLevel']['FloorOrLevelType']"
+								},
+								"sink": {
+									"name": "FloorType",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StructuredAddress']['LocationDescriptor']"
+								},
+								"sink": {
+									"name": "LocationDescriptor",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['SuburbOrPlaceOrLocality']"
+								},
+								"sink": {
+									"name": "Suburb",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['StateOrTerritory']"
+								},
+								"sink": {
+									"name": "State",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['PostCode']"
+								},
+								"sink": {
+									"name": "PostCode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['DeliveryPointIdentifier']"
+								},
+								"sink": {
+									"name": "DeliveryPointIdentifier",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Address']['GNAFPID']"
+								},
+								"sink": {
+									"name": "GNAFPID",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Aggregate']"
+								},
+								"sink": {
+									"name": "Aggregate",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['Status']"
+								},
+								"sink": {
+									"name": "Status",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['FeederClass']"
+								},
+								"sink": {
+									"name": "FeederClass",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CustomerClassificationCode']"
+								},
+								"sink": {
+									"name": "CustomerClassificationCode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['CustomerThresholdCode']"
+								},
+								"sink": {
+									"name": "CustomerThresholdCode",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['SharedIsolationPointFlag']"
+								},
+								"sink": {
+									"name": "SharedIsolationPointFlag",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['ConnectionConfiguration']"
+								},
+								"sink": {
+									"name": "ConnectionConfiguration",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['LastConsumerChangeDate']"
+								},
+								"sink": {
+									"name": "LastConsumerChangeDate",
+									"type": "Date"
+								}
+							},
+							{
+								"source": {
+									"path": "['MeterMalfunctionExemptionNumber']"
+								},
+								"sink": {
+									"name": "MeterMalfunctionExemptionNumber",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "['MeterMalfunctionExemptionExpiryDate']"
+								},
+								"sink": {
+									"name": "MeterMalfunctionExemptionExpiryDate",
+									"type": "Date"
+								}
+							},
+							{
+								"source": {
+									"path": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportParameters']['Participant']"
+								},
+								"sink": {
+									"name": "ParticipantId",
+									"type": "String"
+								}
+							}
+						],
+						"collectionReference": "$['ase:aseXML']['Transactions']['Transaction']['ReportResponse']['ReportResults']['ReplicationBlock']['Row']"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SRC_ADSL_MSATS_SnapshotXmlFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_container": {
+								"value": "@pipeline().parameters.pl_param_container",
+								"type": "Expression"
+							},
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pl_param_folder",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADSL_MSATS_CND_ParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_container": "raw",
+							"ds_param_folder": "AEMO/msats_snapshots/msats_nmi_data"
+						}
+					}
+				]
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Snapshot_Refresh",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_MSATS_Snapshot_Copy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "MSATS_Snapshot_CND_FileCopy",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "MSATS_Snapshot_Copy",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AEMO_Bronze_NMI_DATA_FullHistory",
+				"description": "Removes unwanted files.",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "MSATS_Snapshot_CND_FileCopy",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "AEMO_Bronze_NMI_DATA_FullHistory",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Bronze_NMI_DATA_FullHistory",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Bronze_NMI_DATA_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_NMI_DATA_FullHistory",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "AEMO_Bronze_NMI_DATA_FullHistory",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "AEMO_Bronze_NMI_DATA_FullHistory",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_container": {
+				"type": "string",
+				"defaultValue": "drop-zone"
+			},
+			"pl_param_folder": {
+				"type": "string",
+				"defaultValue": "aemo/msats_snapshots/nmimaster"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/RetailUseCaseMSATS/SubPipelines"
+		},
+		"annotations": []
+	}
+}

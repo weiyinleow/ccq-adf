@@ -1,0 +1,33 @@
+{
+	"name": "LS_REST_PIWebAPI",
+	"properties": {
+		"parameters": {
+			"ls_param_adfserviceacct_username": {
+				"type": "string"
+			},
+			"ls_param_base_url": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "@{linkedService().ls_param_base_url}",
+			"enableServerCertificateValidation": false,
+			"authenticationType": "Basic",
+			"userName": "@{linkedService().ls_param_adfserviceacct_username}",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AKV_AA_KV01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "cleanco-datahub-serviceaccount-password"
+			}
+		},
+		"connectVia": {
+			"referenceName": "SelfHostedIntegrationRuntime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

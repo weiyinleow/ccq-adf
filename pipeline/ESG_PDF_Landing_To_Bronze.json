@@ -1,0 +1,1034 @@
+{
+	"name": "ESG_PDF_Landing_To_Bronze",
+	"properties": {
+		"activities": [
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Landing_To_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CBRE_Landing_To_Bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "CBRE_Landing_To_Bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"param_synapse_sql_linked_service_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_synapse_sql_linked_service_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"datahub_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_blb_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"synapse_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_dl_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"source_container": {
+							"value": "landing",
+							"type": "string"
+						},
+						"destination_folder_path": {
+							"value": "esg_sharepoint_files/cbre",
+							"type": "string"
+						},
+						"archive_container": {
+							"value": "archive",
+							"type": "string"
+						},
+						"pipeline_run_ID": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_Name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"bronze_container": {
+							"value": "bronze",
+							"type": "string"
+						},
+						"bronze_database_name": {
+							"value": "cbre_bronze",
+							"type": "string"
+						},
+						"bronze_folder_path": {
+							"value": "esg_sharepoint_bronze/cbre",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "ERGON_Landing_To_Bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "ERGON_Landing_To_Bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"param_synapse_sql_linked_service_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_synapse_sql_linked_service_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_run_ID": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_Name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"datahub_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_blb_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"synapse_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_dl_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"source_container": {
+							"value": "landing",
+							"type": "string"
+						},
+						"destination_folder_path": {
+							"value": "esg_sharepoint_files/ergon",
+							"type": "string"
+						},
+						"archive_container": {
+							"value": "archive",
+							"type": "string"
+						},
+						"bronze_container": {
+							"value": "bronze",
+							"type": "string"
+						},
+						"bronze_database_name": {
+							"value": "ergon_bronze",
+							"type": "string"
+						},
+						"bronze_folder_path": {
+							"value": "esg_sharepoint_bronze/ergon",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "MARANO_BULK_Landing_To_Bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "MARANO_BULK_Landing_To_Bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"param_synapse_sql_linked_service_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_synapse_sql_linked_service_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_run_ID": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_Name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"datahub_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_blb_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"synapse_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_dl_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"source_container": {
+							"value": "landing",
+							"type": "string"
+						},
+						"destination_folder_path": {
+							"value": "esg_sharepoint_files/marano_bulk",
+							"type": "string"
+						},
+						"archive_container": {
+							"value": "archive",
+							"type": "string"
+						},
+						"bronze_container": {
+							"value": "bronze",
+							"type": "string"
+						},
+						"bronze_database_name": {
+							"value": "marano_bronze",
+							"type": "string"
+						},
+						"bronze_folder_path": {
+							"value": "esg_sharepoint_bronze/marano",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "MARANO_Landing_To_Bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "MARANO_Landing_To_Bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"param_synapse_sql_linked_service_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_synapse_sql_linked_service_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_run_ID": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_Name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"datahub_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_blb_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"synapse_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_dl_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"source_container": {
+							"value": "landing",
+							"type": "string"
+						},
+						"destination_folder_path": {
+							"value": "esg_sharepoint_files/marano",
+							"type": "string"
+						},
+						"archive_container": {
+							"value": "archive",
+							"type": "string"
+						},
+						"bronze_container": {
+							"value": "bronze",
+							"type": "string"
+						},
+						"bronze_database_name": {
+							"value": "marano_bronze",
+							"type": "string"
+						},
+						"bronze_folder_path": {
+							"value": "esg_sharepoint_bronze/marano",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "ORIGIN_Landing_To_Bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "ORIGIN_Landing_To_Bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"param_synapse_sql_linked_service_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_synapse_sql_linked_service_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_run_ID": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_Name": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"datahub_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_blb_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"synapse_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_dl_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"source_container": {
+							"value": "landing",
+							"type": "string"
+						},
+						"destination_folder_path": {
+							"value": "esg_sharepoint_files/origin",
+							"type": "string"
+						},
+						"archive_container": {
+							"value": "archive",
+							"type": "string"
+						},
+						"bronze_container": {
+							"value": "bronze",
+							"type": "string"
+						},
+						"bronze_database_name": {
+							"value": "origin_bronze",
+							"type": "string"
+						},
+						"bronze_folder_path": {
+							"value": "esg_sharepoint_bronze/origin",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SYN_LND_TO_BRONZE_CBRE",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CBRE_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Landing_To_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SYN_LND_TO_BRONZE_ERGON",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ERGON_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Landing_To_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SYN_LND_TO_BRONZE_MARANO",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "MARANO_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Landing_To_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SYN_LND_TO_BRZ_MARANO_BULK",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "MARANO_BULK_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Landing_To_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SYN_LND_TO_BRONZE_ORIGIN",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ORIGIN_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Landing_To_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Check Validation Log Table",
+				"description": "Check if any validation error records require a notification to be sent.",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "CBRE_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Completed"
+						]
+					},
+					{
+						"activity": "ERGON_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Completed"
+						]
+					},
+					{
+						"activity": "MARANO_BULK_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Completed"
+						]
+					},
+					{
+						"activity": "MARANO_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Completed"
+						]
+					},
+					{
+						"activity": "ORIGIN_Landing_To_Bronze",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT \nCASE WHEN COUNT(RecordID) > 0 THEN 'True' ELSE 'False' END AS ErrorsDetected\nFROM [CTL].[ESG_SHAREPOINT_PDF_VALIDATON_LOG]\nWHERE NotificationSent = 0",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "Set variable - vErrorsDetected",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Check Validation Log Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vErrorsDetected",
+					"value": {
+						"value": "@activity('Check Validation Log Table').output.firstRow.ErrorsDetected",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Switch - Check ErrorsDetected",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "Set variable - vErrorsDetected",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@variables('vErrorsDetected')",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "True",
+							"activities": [
+								{
+									"name": "NOTIFICATION_OF_ERROR_RECORDS",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"pl_param_MartName": "ESG_PDF_Landing_To_Bronze_Errors_Detected",
+											"pl_param_PipelineRunId": {
+												"value": "@pipeline().RunId",
+												"type": "Expression"
+											},
+											"pl_param_PipeLineName": {
+												"value": "@pipeline().Pipeline",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "Script - Update Error Log Table NotificationSent",
+									"type": "Script",
+									"dependsOn": [
+										{
+											"activity": "NOTIFICATION_OF_ERROR_RECORDS",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "LS_SQL_ELTFrameworkDB01",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "NonQuery",
+												"text": "UPDATE [CTL].[ESG_SHAREPOINT_PDF_VALIDATON_LOG] SET NotificationSent = 1 WHERE NotificationSent = 0"
+											}
+										],
+										"scriptBlockExecutionTimeout": "02:00:00"
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Switch - Check ErrorsDetected",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Landing_To_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_ERROR_NOTIFICATION",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Switch - Check ErrorsDetected",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Landing_To_Bronze",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"variables": {
+			"vErrorsDetected": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/SustainabilityUseCase/SHAREPOINT_ONLINE_FILES"
+		},
+		"annotations": []
+	}
+}

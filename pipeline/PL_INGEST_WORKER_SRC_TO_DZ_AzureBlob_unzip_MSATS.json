@@ -1,0 +1,71 @@
+{
+	"name": "PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob_unzip_MSATS",
+	"properties": {
+		"activities": [
+			{
+				"name": "AEMO_MSATS_FileCopy_unzip",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings",
+							"compressionProperties": {
+								"type": "ZipDeflateReadSettings"
+							}
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SNK_Filesystem_ADSL_Generic_source_MSATS",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_Filesystem_ADSL_Generic_destination_MSATS",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "2 - DataHubPipelines/RetailUseCaseMSATS/SubPipelines"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,45 @@
+{
+	"name": "DS_CFG_SQL_DeltaValuesTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_ELTFrameworkDB01",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "99 - Framework Components"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "TABLE_NAME",
+				"type": "varchar"
+			},
+			{
+				"name": "TABLE_PATH",
+				"type": "varchar"
+			},
+			{
+				"name": "DELTA_COLUMN",
+				"type": "varchar"
+			},
+			{
+				"name": "DELTA_DATA_TYPE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DELTA_START_VALUE",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DELTA_END_VALUE",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "EXEC_DELTA_VALUES"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

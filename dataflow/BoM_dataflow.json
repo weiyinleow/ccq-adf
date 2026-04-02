@@ -1,0 +1,105 @@
+{
+	"name": "BoM_dataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "BoM_XML",
+						"type": "DatasetReference"
+					},
+					"name": "BomObsSource"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "LS_ADLS2_Generic",
+						"type": "LinkedServiceReference"
+					},
+					"name": "BomObsSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "BomObsFlatten"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          product as ({@version} as string, amoc as (identifier as string, {issue-time-local} as ({@tz} as string, {_value_} as string), {issue-time-utc} as string, phase as string, {product-type} as string, {sent-time} as string, service as string, source as (copyright as string, disclaimer as string, office as string, region as string, sender as string), status as string), observations as (station as ({@bom-id} as integer, {@description} as string, {@forecast-district-id} as string, {@lat} as double, {@lon} as double, {@stn-height} as double, {@stn-name} as string, {@type} as string, {@tz} as string, {@wmo-id} as integer, period as ({@index} as boolean, {@time-local} as string, {@time-utc} as string, {@wind-src} as string, level as ({@index} as boolean, {@type} as string, element as ({@duration} as short, {@end-time-local} as string, {@end-time-utc} as string, {@instance} as string, {@start-time-local} as string, {@start-time-utc} as string, {@time-local} as string, {@time-utc} as string, {@type} as string, {@units} as string, {_value_} as string)[])))[]))",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     inferDriftedColumnTypes: true,",
+				"     ignoreNoFilesFound: false,",
+				"     validationMode: 'none',",
+				"     namespaces: true) ~> BomObsSource",
+				"BomObsSource foldDown(unroll(product.observations.station.period.level.element),",
+				"     mapColumn(",
+				"          version = product.{@version},",
+				"          issuetimelocal = product.amoc.identifier,",
+				"          AmocTz = product.amoc.{issue-time-local}.{@tz},",
+				"          AmocValue = product.amoc.{issue-time-local}.{_value_},",
+				"          AmocIssueTimeUtc = product.amoc.{issue-time-utc},",
+				"          AmocPhase = product.amoc.phase,",
+				"          AmocProductType = product.amoc.{product-type},",
+				"          AmocSentTime = product.amoc.{sent-time},",
+				"          AmocService = product.amoc.service,",
+				"          Copyright = product.amoc.source.copyright,",
+				"          Disclaimer = product.amoc.source.disclaimer,",
+				"          Office = product.amoc.source.office,",
+				"          Region = product.amoc.source.region,",
+				"          Sender = product.amoc.source.sender,",
+				"          Status = product.amoc.status,",
+				"          BomID = product.observations.station.{@bom-id},",
+				"          Description = product.observations.station.{@description},",
+				"          ForecastDistrictID = product.observations.station.{@forecast-district-id},",
+				"          ObsrLat = product.observations.station.{@lat},",
+				"          ObsrLon = product.observations.station.{@lon},",
+				"          StnHeight = product.observations.station.{@stn-height},",
+				"          StnName = product.observations.station.{@stn-name},",
+				"          StnType = product.observations.station.{@type},",
+				"          StnTz = product.observations.station.{@tz},",
+				"          wmoID = product.observations.station.{@wmo-id},",
+				"          StnIndex = product.observations.station.period.{@index},",
+				"          StnLvlType = product.observations.station.period.level.{@type},",
+				"          ElementDuration = product.observations.station.period.level.element.{@duration},",
+				"          ElementEndTimeLocal = product.observations.station.period.level.element.{@end-time-local},",
+				"          ElementEndTimeUtc = product.observations.station.period.level.element.{@end-time-utc},",
+				"          ElementInstance = product.observations.station.period.level.element.{@instance},",
+				"          ElementStartTimeLocal = product.observations.station.period.level.element.{@start-time-local},",
+				"          ElementStartTimeUtc = product.observations.station.period.level.element.{@start-time-utc},",
+				"          ElementTimeLocal = product.observations.station.period.level.element.{@time-local},",
+				"          ElementTimeUtc = product.observations.station.period.level.element.{@time-utc},",
+				"          ElementType = product.observations.station.period.level.element.{@type},",
+				"          ElementUnits = product.observations.station.period.level.element.{@units},",
+				"          ElementValue = product.observations.station.period.level.element.{_value_}",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> BomObsFlatten",
+				"BomObsFlatten sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delta',",
+				"     fileSystem: 'bronze',",
+				"     folderPath: 'bom/obs10min',",
+				"     mergeSchema: false,",
+				"     autoCompact: false,",
+				"     optimizedWrite: false,",
+				"     vacuum: 0,",
+				"     deletable: false,",
+				"     insertable: true,",
+				"     updateable: false,",
+				"     upsertable: false,",
+				"     partitionFileNames:['IDQ60920.parquet'],",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> BomObsSink"
+			]
+		}
+	}
+}

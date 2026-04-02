@@ -1,0 +1,37 @@
+{
+	"name": "DS_Sharepoint_PDF_SOURCE_TO_DZ",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_Sharepoint_Folder",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"param_sharepoint_baseURL": {
+					"value": "@dataset().param_sharepoint_baseURL",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"RELATIVE_URL_ENDPOINT": {
+				"type": "string"
+			},
+			"param_sharepoint_baseURL": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "4 - Drop-Zone"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@dataset().RELATIVE_URL_ENDPOINT",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

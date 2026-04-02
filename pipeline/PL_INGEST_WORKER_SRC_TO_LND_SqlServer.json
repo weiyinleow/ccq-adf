@@ -1,0 +1,834 @@
+{
+	"name": "PL_INGEST_WORKER_SRC_TO_LND_SqlServer",
+	"properties": {
+		"activities": [
+			{
+				"name": "copy",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "setFileName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "@variables('selectStatement')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"enableSkipIncompatibleRow": true,
+					"redirectIncompatibleRowSettings": {
+						"linkedServiceName": {
+							"referenceName": "LS_ADLS2_Landing",
+							"type": "LinkedServiceReference"
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SQL_SqlServer_GenericTable",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_tableSchema": {
+								"value": "@{pipeline().parameters.pl_param_item.SOURCE_SCHEMA}",
+								"type": "Expression"
+							},
+							"ds_param_tableName": {
+								"value": "@{pipeline().parameters.pl_param_item.SOURCE_NAME}",
+								"type": "Expression"
+							},
+							"ls_param_serverName": {
+								"value": "@pipeline().parameters.pl_param_sourceConfig.SERVER_NAME",
+								"type": "Expression"
+							},
+							"ls_param_databaseName": {
+								"value": "@pipeline().parameters.pl_param_sourceConfig.DATABASE_NAME",
+								"type": "Expression"
+							},
+							"ls_param_username": {
+								"value": "@pipeline().parameters.pl_param_sourceConfig.USERNAME",
+								"type": "Expression"
+							},
+							"ls_param_password_keyvault_secret": {
+								"value": "@pipeline().parameters.pl_param_sourceConfig.PASSWORD_KEYVAULT_SECRET",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@{trim(pipeline().parameters.pl_param_loadConfig.LANDING_PATH)}",
+								"type": "Expression"
+							},
+							"ds_param_fileName": {
+								"value": "@variables('targetFileName')",
+								"type": "Expression"
+							},
+							"ds_param_fileSystem": "landing",
+							"ds_param_endPoint": "https://vndatapltfv2devst02.dfs.core.windows.net"
+						}
+					}
+				]
+			},
+			{
+				"name": "getSelectStatement",
+				"description": "https://feedback.azure.com/forums/270578-data-factory/suggestions/39046705-copy-data-parquet-files-support-file-copying-w",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "logWorkerStart",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[CTL].[USP_GET_SQL_SELECT_COLUMN_SQLSERVER]",
+						"storedProcedureParameters": {
+							"loadset_item_id": {
+								"type": "Int32",
+								"value": {
+									"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+									"type": "Expression"
+								}
+							},
+							"source_name": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().parameters.pl_param_item.SOURCE_NAME}",
+									"type": "Expression"
+								}
+							},
+							"source_schema": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().parameters.pl_param_item.SOURCE_SCHEMA}",
+									"type": "Expression"
+								}
+							},
+							"source_type": {
+								"type": "String",
+								"value": {
+									"value": "@{pipeline().parameters.pl_param_item.SOURCE_TYPE}",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "switchLoadPreProcessing",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "getSelectStatement",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@toLower(pipeline().parameters.pl_param_item.LOAD_TYPE)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "delta",
+							"activities": [
+								{
+									"name": "initialiseDeltaEntry",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[CTL].[USP_DELTA_VALUE_ENTRY_INITIALISE]",
+										"storedProcedureParameters": {
+											"delta_column": {
+												"value": {
+													"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_COLUMN'),trim(pipeline().parameters.pl_param_item.DELTA_COLUMN),'')",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"delta_data_type": {
+												"value": {
+													"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_DATA_TYPE'),trim(pipeline().parameters.pl_param_item.DELTA_DATA_TYPE),'')",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"delta_type": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.DELTA_TYPE)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"source": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_NAME)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"target_schema": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.TARGET_SCHEMA)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"source_schema": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_SCHEMA)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"source_type": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_TYPE)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_SQL_ELTFrameworkDB01",
+										"type": "LinkedServiceReference"
+									}
+								},
+								{
+									"name": "lookupMaxDeltaValueInSource",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "getMaxDeltaValueStatement",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlServerSource",
+											"sqlReaderQuery": {
+												"value": "@activity('getMaxDeltaValueStatement').output.FirstRow.SQL_GET_MAX_DELTA_VALUE",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "DS_SQL_SqlServer_GenericTable",
+											"type": "DatasetReference",
+											"parameters": {
+												"ds_param_tableSchema": {
+													"value": "@{pipeline().parameters.pl_param_item.SOURCE_SCHEMA}",
+													"type": "Expression"
+												},
+												"ds_param_tableName": {
+													"value": "@{pipeline().parameters.pl_param_item.SOURCE_NAME}",
+													"type": "Expression"
+												},
+												"ls_param_serverName": {
+													"value": "@pipeline().parameters.pl_param_sourceConfig.SERVER_NAME",
+													"type": "Expression"
+												},
+												"ls_param_databaseName": {
+													"value": "@pipeline().parameters.pl_param_sourceConfig.DATABASE_NAME",
+													"type": "Expression"
+												},
+												"ls_param_username": {
+													"value": "@pipeline().parameters.pl_param_sourceConfig.USERNAME",
+													"type": "Expression"
+												},
+												"ls_param_password_keyvault_secret": {
+													"value": "@pipeline().parameters.pl_param_sourceConfig.PASSWORD_KEYVAULT_SECRET",
+													"type": "Expression"
+												}
+											}
+										},
+										"firstRowOnly": true
+									}
+								},
+								{
+									"name": "getMaxDeltaValueStatement",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "initialiseDeltaEntry",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderStoredProcedureName": "[CTL].[USP_DELTA_GET_SQL_MAX_DELTA_SQLSERVER]",
+											"storedProcedureParameters": {
+												"delta_column": {
+													"type": "String",
+													"value": {
+														"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_COLUMN'),pipeline().parameters.pl_param_item.DELTA_COLUMN,null)",
+														"type": "Expression"
+													}
+												},
+												"delta_data_type": {
+													"type": "String",
+													"value": {
+														"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_DATA_TYPE'),pipeline().parameters.pl_param_item.DELTA_DATA_TYPE,null)",
+														"type": "Expression"
+													}
+												},
+												"delta_type": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.DELTA_TYPE}",
+														"type": "Expression"
+													}
+												},
+												"table_name": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.SOURCE_NAME}",
+														"type": "Expression"
+													}
+												},
+												"target_schema": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.TARGET_SCHEMA}",
+														"type": "Expression"
+													}
+												},
+												"table_schema": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.SOURCE_SCHEMA}",
+														"type": "Expression"
+													}
+												}
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+											"type": "DatasetReference"
+										},
+										"firstRowOnly": true
+									}
+								},
+								{
+									"name": "getWhereClause",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "setVarMaxDeltaValue",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderStoredProcedureName": "[CTL].[USP_DELTA_GET_SQL_SELECT_SQLSERVER_ADF_WRAPPER]",
+											"storedProcedureParameters": {
+												"delta_type": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.DELTA_TYPE}",
+														"type": "Expression"
+													}
+												},
+												"source_type": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.SOURCE_TYPE}",
+														"type": "Expression"
+													}
+												},
+												"table_name": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.SOURCE_NAME}",
+														"type": "Expression"
+													}
+												},
+												"target_schema": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.TARGET_SCHEMA}",
+														"type": "Expression"
+													}
+												},
+												"table_schema": {
+													"type": "String",
+													"value": {
+														"value": "@{pipeline().parameters.pl_param_item.SOURCE_SCHEMA}",
+														"type": "Expression"
+													}
+												},
+												"delta_end_value": {
+													"type": "String",
+													"value": {
+														"value": "@variables('maxDeltaValue')",
+														"type": "Expression"
+													}
+												},
+												"delta_period": {
+													"type": "Int16",
+													"value": {
+														"value": "@if(contains(pipeline().parameters.pl_param_item,'deltaPeriod'),pipeline().parameters.pl_param_item.deltaPeriod,null)",
+														"type": "Expression"
+													}
+												}
+											},
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+											"type": "DatasetReference"
+										}
+									}
+								},
+								{
+									"name": "setVarSelectStatementDelta",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "getWhereClause",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "selectStatement",
+										"value": {
+											"value": "@concat(activity('getSelectStatement').output.firstRow.SELECT_STATEMENT, ' ', activity('getWhereClause').output.firstRow.WHERE_CLAUSE)",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "setVarMaxDeltaValue",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "lookupMaxDeltaValueInSource",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "maxDeltaValue",
+										"value": {
+											"value": "@activity('lookupMaxDeltaValueInSource').output.firstRow.maxValue",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"value": "full",
+							"activities": [
+								{
+									"name": "setVarSelectStatementFull",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "selectStatement",
+										"value": {
+											"value": "@activity('getSelectStatement').output.firstRow.SELECT_STATEMENT",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "switchLoadPostProcessing",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "initLandingFileSQL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@toLower(pipeline().parameters.pl_param_item.LOAD_TYPE)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "delta",
+							"activities": [
+								{
+									"name": "updateDeltaValues",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[CTL].[USP_DELTA_VALUE_ENTRY_INITIALISE]",
+										"storedProcedureParameters": {
+											"delta_column": {
+												"value": {
+													"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_COLUMN'),trim(pipeline().parameters.pl_param_item.DELTA_COLUMN),'')",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"delta_data_type": {
+												"value": {
+													"value": "@if(contains(pipeline().parameters.pl_param_item,'DELTA_DATA_TYPE'),trim(pipeline().parameters.pl_param_item.DELTA_DATA_TYPE),'')\n",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"delta_value": {
+												"value": {
+													"value": "@variables('maxDeltaValue')",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"source": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_NAME)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"target_schema": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.TARGET_SCHEMA)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"source_schema": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_SCHEMA)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"delta_type": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.DELTA_TYPE)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"source_type": {
+												"value": {
+													"value": "@{trim(pipeline().parameters.pl_param_item.SOURCE_TYPE)}",
+													"type": "Expression"
+												},
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_SQL_ELTFrameworkDB01",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "logWorkerStart",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[CTL].[USP_LOG_WORKER_RUNNING]",
+					"storedProcedureParameters": {
+						"callingPipelineId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_pipelineId",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"callingPipelineRunId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_pipelineRunId",
+								"type": "Expression"
+							},
+							"type": "Guid"
+						},
+						"workerName": {
+							"value": {
+								"value": "@pipeline().Pipeline",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"workerRunId": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "Guid"
+						},
+						"workerType": {
+							"value": "Ingest",
+							"type": "String"
+						},
+						"loadSetItemId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB01",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "initLandingFileSQL",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "copy",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[CTL].[USP_LANDING_FILE_INITIALISE]",
+						"storedProcedureParameters": {
+							"FILE_NAME": {
+								"type": "String",
+								"value": {
+									"value": "@variables('targetFileName')",
+									"type": "Expression"
+								}
+							},
+							"INGEST_DATETIME": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcNow()",
+									"type": "Expression"
+								}
+							},
+							"LOADSET_ITEM_ID": {
+								"type": "Int32",
+								"value": {
+									"value": "@pipeline().parameters.pl_param_item.LOADSET_ITEM_ID",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "setFileName",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "switchLoadPreProcessing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "targetFileName",
+					"value": {
+						"value": "@{trim(toUpper(pipeline().parameters.pl_param_item.TARGET_TABLE))}__@{trim(pipeline().parameters.pl_param_item.LOAD_TYPE)}_@{pipeline().RunId}_@{formatDateTime(pipeline().TriggerTime,'yyyyMMdd_HHMMss')}.snappy.parquet",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_item": {
+				"type": "object"
+			},
+			"pl_param_sourceConfig": {
+				"type": "object"
+			},
+			"pl_param_pipelineId": {
+				"type": "string"
+			},
+			"pl_param_pipelineRunId": {
+				"type": "string"
+			},
+			"pl_param_loadConfig": {
+				"type": "object"
+			}
+		},
+		"variables": {
+			"selectStatement": {
+				"type": "String"
+			},
+			"maxDeltaValue": {
+				"type": "String"
+			},
+			"targetFileName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:20Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

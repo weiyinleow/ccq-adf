@@ -1,0 +1,27 @@
+{
+	"name": "DS_ADX_GenericTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADX_GenericCluster",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ds_param_tableName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "1 - Databases"
+		},
+		"annotations": [],
+		"type": "AzureDataExplorerTable",
+		"schema": [],
+		"typeProperties": {
+			"table": {
+				"value": "@dataset().ds_param_tableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,186 @@
+{
+	"name": "PL_INGEST_WORKER_LND_TO_STORE_Synapse_Spark_SHOWCASE",
+	"properties": {
+		"description": "To put in looping of file for processing landing files...Notebook for landing needs to be amended as well. To talk to Barshan for handling.",
+		"activities": [
+			{
+				"name": "LandingToRaw",
+				"type": "SynapseNotebook",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "ReadFromLanding",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"source_storage": {
+							"value": "vndatapltfv2devst02",
+							"type": "string"
+						},
+						"source_container": {
+							"value": "landing",
+							"type": "string"
+						},
+						"source_path": {
+							"value": "demodata/demo_aemo",
+							"type": "string"
+						},
+						"source_file": {
+							"value": "demodata2.xml",
+							"type": "string"
+						},
+						"destination_storage": {
+							"value": "vndatapltfv2devst02",
+							"type": "string"
+						},
+						"destination_container": {
+							"value": "raw",
+							"type": "string"
+						},
+						"destination_path": {
+							"value": "aemo",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "devsparkpool01",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				}
+			},
+			{
+				"name": "RawToConformance",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "LandingToRaw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "ReadFromRaw",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"source_storage": {
+							"value": "vndatapltfv2devst02",
+							"type": "string"
+						},
+						"source_container": {
+							"value": "raw",
+							"type": "string"
+						},
+						"source_path": {
+							"value": "aemo",
+							"type": "string"
+						},
+						"source_file": {
+							"value": "",
+							"type": "string"
+						},
+						"destination_storage": {
+							"value": "vndatapltfv2devst02",
+							"type": "string"
+						},
+						"destination_container": {
+							"value": "conformance",
+							"type": "string"
+						},
+						"destination_path": {
+							"value": "aemo",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "devsparkpool01",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_item": {
+				"type": "object"
+			},
+			"pl_param_destinationConfig": {
+				"type": "object"
+			},
+			"pl_param_pipelineId": {
+				"type": "string"
+			},
+			"pl_param_pipelineRunId": {
+				"type": "string"
+			},
+			"pl_param_loadConfig": {
+				"type": "object"
+			}
+		},
+		"variables": {
+			"selectStatement": {
+				"type": "String"
+			},
+			"maxDeltaValue": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/2 - Landing to Store"
+		},
+		"annotations": []
+	}
+}

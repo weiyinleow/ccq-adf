@@ -1,0 +1,163 @@
+{
+	"name": "PL_GET_SCHEMA_SqlServer",
+	"properties": {
+		"activities": [
+			{
+				"name": "getSchema",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "getSourceConfig",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "@CONCAT('SELECT \n\tSCHEMA_NAME(tab.schema_id) AS SCHEMA_NAME,\n    tab.name AS TABLE_NAME, \n\ttab.type AS TYPE,\n    col.name AS COLUMN_NAME, \n    col.column_id AS COLUMN_POSITION,\n    t.name AS DATA_TYPE,    \n    col.max_length AS LENGTH,\n    col.precision AS PRECISION,\n\tcol.scale AS SCALE,\n\tCASE \n\t\tWHEN pks.column_id IS NOT NULL THEN 1\n        ELSE 0\n\tEND AS PRIMARY_KEY_FLAG,\n\tpks.index_column_id AS PRIMARY_KEY_POSITION,\n\tNULL AS PRIMARY_KEY_SORT_ORDER\nFROM (SELECT \n\t\tname,\n\t\tobject_id,\n\t\tschema_id,\n\t\t''Table'' AS type\n\tFROM sys.tables\n\tWHERE type = ''U''\n\tUNION\n\tSELECT \n\t\tname,\n\t\tobject_id,\n\t\tschema_id,\n\t\t''View'' AS type\n\tFROM sys.views\n\tWHERE is_ms_shipped = 0) tab\n    INNER JOIN sys.columns col \n\t\tON tab.object_id = col.object_id\n    LEFT JOIN \n\t/*Necessary to associate custom data types to their correct system data type*/\n\t(SELECT stypes.*, utypes.user_type_id AS correct_user_type_id FROM \n\t\t(SELECT * FROM sys.types\n\t\tWHERE is_user_defined = 0 and system_type_id = user_type_id) stypes \n\t INNER JOIN  sys.types utypes ON stypes.system_type_id = utypes.system_type_id)  t \n\t\tON col.user_type_id = t.correct_user_type_id\n\tLEFT JOIN (\n\t\tSELECT \n\t\t\tic.object_id\n\t\t\t, ic.column_id\n\t\t\t, ic.index_column_id\n\t\tFROM sys.indexes pk\n\t\tINNER JOIN sys.index_columns ic\n\t\t\tON ic.object_id = pk.object_id\n\t\t\tAND ic.index_id = pk.index_id\n\t\tWHERE pk.is_primary_key = 1\n\t) pks ON col.object_id = pks.object_id \n\t\tAND col.column_id = pks.column_id\nWHERE SCHEMA_NAME(tab.schema_id)=''', pipeline().parameters.pl_param_schemaName,\n''' ORDER BY schema_name,\n    tab.name, \n    col.column_id'\n)",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_SRC_SQL_GenericTable",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_tableSchema": "temp",
+							"ds_param_tableName": "temp",
+							"ls_param_serverName": {
+								"value": "@activity('getSourceConfig').output.firstRow.SERVER_NAME",
+								"type": "Expression"
+							},
+							"ls_param_databaseName": {
+								"value": "@activity('getSourceConfig').output.firstRow.DATABASE_NAME",
+								"type": "Expression"
+							},
+							"ls_param_username": {
+								"value": "@activity('getSourceConfig').output.firstRow.USERNAME",
+								"type": "Expression"
+							},
+							"ls_param_password_keyvault_secret": {
+								"value": "@activity('getSourceConfig').output.firstRow.PASSWORD_KEYVAULT_SECRET",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "getSourceConfig",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[CTL].[USP_GET_CONNECTION_CONFIG]",
+						"storedProcedureParameters": {
+							"CONNECTION_ID": {
+								"type": "Int32",
+								"value": {
+									"value": "@pipeline().parameters.pl_param_connectionId",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "setSchemaDefinition",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "getSchema",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[CTL].[USP_SET_INGESTION_SCHEMA_DEFINITION]",
+					"storedProcedureParameters": {
+						"connectionId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_connectionId",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"ingestionSchemaName": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_schemaName",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"json": {
+							"value": {
+								"value": "@string(activity('getSchema').output.value)",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_connectionId": {
+				"type": "int",
+				"defaultValue": 3
+			},
+			"pl_param_schemaName": {
+				"type": "string",
+				"defaultValue": "SalesLT"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/Utility/Schema Utilities"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:20Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

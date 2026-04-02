@@ -1,0 +1,19 @@
+{
+	"name": "DS_CFG_SQL_CTL_TABLES",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_ELTFrameworkDB01",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "99 - Framework Components"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "CTL",
+			"table": "SHAREPOINT_FILE_DETAILS"
+		}
+	}
+}

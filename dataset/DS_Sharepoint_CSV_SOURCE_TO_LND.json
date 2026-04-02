@@ -1,0 +1,42 @@
+{
+	"name": "DS_Sharepoint_CSV_SOURCE_TO_LND",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_Sharepoint_Folder",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"param_sharepoint_baseURL": {
+					"value": "@dataset().param_sharepoint_baseurl",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"RELATIVE_URL_ENDPOINT": {
+				"type": "string"
+			},
+			"param_sharepoint_baseurl": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "2 - Landing"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@dataset().RELATIVE_URL_ENDPOINT",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}

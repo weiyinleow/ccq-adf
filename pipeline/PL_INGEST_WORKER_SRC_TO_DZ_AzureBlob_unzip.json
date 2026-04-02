@@ -1,0 +1,81 @@
+{
+	"name": "PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob_unzip",
+	"properties": {
+		"activities": [
+			{
+				"name": "AEMO_FileCopy_unzip",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "msats/retail/archive/"
+					},
+					{
+						"name": "Destination",
+						"value": "landing//"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"deleteFilesAfterCompletion": false
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings",
+							"compressionProperties": {
+								"type": "ZipDeflateReadSettings"
+							}
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SNK_Filesystem_ADSL_Generic_source",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_Filesystem_ADSL_Generic_destination",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,47 @@
+{
+	"name": "PL_SEND_NOTIFICATION",
+	"properties": {
+		"activities": [
+			{
+				"name": "PL_SEND_NOTIFICATION",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "SendTeamsNotification",
+					"body": {
+						"value": "{\n    \"ChannelKeys\": [\"@{pipeline().parameters.pl_param_NotificationChannel}\"],\n    \"Title\": \"@{pipeline().parameters.pl_param_MartName}\",\n    \"SeverityLevel\": \"@{pipeline().parameters.pl_param_SeverityLevel}\",\n    \"Subtitle\": \"Load Failure @{pipeline().parameters.pl_param_MartName}\",\n    \"BodyText\":\"The Datalake ingestion of @{pipeline().parameters.pl_param_MartName} has failed.\",\n    \"Facts\": {\n        \"Pipeline Name\":\"@{pipeline().Pipeline}\",\n        \"Pipeline ID\":\"@{pipeline().RunId}\",\n        \"Start Time (UTC)\":\"@{formatDateTime(pipeline().TriggerTime,'yyyy-MM-dd HH:MM:ss')}\",\n        \"Start Time (AEDT)\":\"@{convertFromUtc(pipeline().TriggerTime,'AUS Eastern Standard Time','yyyy-MM-dd HH:MM:ss')}\"\n    }\n}",
+						"type": "Expression"
+					},
+					"method": "POST"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AFUNC_Notifications",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_NotificationChannel": {
+				"type": "string"
+			},
+			"pl_param_MartName": {
+				"type": "string"
+			},
+			"pl_param_SeverityLevel": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/Utility"
+		},
+		"annotations": []
+	}
+}

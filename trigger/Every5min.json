@@ -1,0 +1,26 @@
+{
+	"name": "Every5min",
+	"properties": {
+		"description": "Scheduled to run every 5 mins",
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "RetailUseCase",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 5,
+				"startTime": "2024-09-30T13:10:00",
+				"endTime": "2024-10-01T13:30:00",
+				"timeZone": "E. Australia Standard Time"
+			}
+		}
+	}
+}

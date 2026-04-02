@@ -1,0 +1,56 @@
+{
+	"name": "DS_SRC_ADLS_GenericParquetFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Generic",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": {
+					"value": "@dataset().ds_param_endPoint",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_folder": {
+				"type": "String"
+			},
+			"ds_param_fileName": {
+				"type": "String"
+			},
+			"ds_param_fileSystem": {
+				"type": "string",
+				"defaultValue": "landing"
+			},
+			"ds_param_endPoint": {
+				"type": "string",
+				"defaultValue": "https://vndatapltfv2devst02.dfs.core.windows.net"
+			}
+		},
+		"folder": {
+			"name": "2 - Landing"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().ds_param_fileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().ds_param_folder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().ds_param_fileSystem",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

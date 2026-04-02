@@ -1,0 +1,7 @@
+{
+	"name": "cqlsharedsql01-datafactory01-endpoint",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/f954f177-4db6-46db-9a99-2bf59d22c1fa/resourceGroups/CQL-AZUR1-PRODSHARED01-DB-RG/providers/Microsoft.Sql/servers/cql-prd-shared",
+		"groupId": "sqlServer"
+	}
+}

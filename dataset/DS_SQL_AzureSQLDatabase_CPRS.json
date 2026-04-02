@@ -1,0 +1,33 @@
+{
+	"name": "DS_SQL_AzureSQLDatabase_CPRS",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_AzureSqlDatabase_CPRS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ds_param_tableSchema": {
+				"type": "string"
+			},
+			"ds_param_tableName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "1 - Databases"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().ds_param_tableSchema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().ds_param_tableName",
+				"type": "Expression"
+			}
+		}
+	}
+}

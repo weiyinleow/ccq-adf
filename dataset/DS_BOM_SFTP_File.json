@@ -1,0 +1,35 @@
+{
+	"name": "DS_BOM_SFTP_File",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_BOM_SFTP",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"pDirectory": {
+				"type": "string"
+			},
+			"pFileName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "1 - Files"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "SftpLocation",
+				"fileName": {
+					"value": "@dataset().pFileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().pDirectory",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

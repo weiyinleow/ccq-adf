@@ -1,0 +1,266 @@
+{
+	"name": "AVEVA_PI_Archive",
+	"properties": {
+		"description": "Pipeline will copy files from landing to timestamped archived folder (.zip) then delete files in landing.",
+		"activities": [
+			{
+				"name": "Get files in landing for archiving",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_SRC_ADLS_JSON_LND",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							},
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pl_param_folder",
+								"type": "Expression"
+							},
+							"ds_param_fileSystem": {
+								"value": "landing",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "JsonReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEach File",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set variable FolderTimeString",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get files in landing for archiving').output.childItems",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "AVEVA PI Landing to Archive",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Set variable - FileName",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": false,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_GenericJsonFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										},
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pl_param_folder",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vFileName')",
+											"type": "Expression"
+										},
+										"ds_param_fileSystem": "landing"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_JSON_ARCH",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										},
+										"ds_param_folder": {
+											"value": "@concat(pipeline().parameters.pl_param_folder,'/',\nvariables('vFolderTimeString')\n)",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@replace(variables('vFileName'),'.json','.zip')",
+											"type": "Expression"
+										},
+										"ds_param_fileSystem": "archive"
+									}
+								}
+							]
+						},
+						{
+							"name": "Set variable - FileName",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "vFileName",
+								"value": {
+									"value": "@item().name",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Delete File in Landing",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "AVEVA PI Landing to Archive",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DS_SNK_ADLS_GenericJsonFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										},
+										"ds_param_folder": {
+											"value": "@pipeline().parameters.pl_param_folder",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@variables('vFileName')",
+											"type": "Expression"
+										},
+										"ds_param_fileSystem": "landing"
+									}
+								},
+								"enableLogging": false,
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": false,
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set variable FolderTimeString",
+				"description": "Creates a folder path based on UTC time to be shared by all files being archived.",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get files in landing for archiving",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vFolderTimeString",
+					"value": {
+						"value": "@concat(\nformatDateTime(utcNow(),'yyyy'),'/',\nformatDateTime(utcNow(),'MM'),'/',\nformatDateTime(utcNow(),'dd'),'/',\nformatDateTime(utcNow(),'mm'),'/',\nformatDateTime(utcNow(),'ss'),'/'\n)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_folder": {
+				"type": "string",
+				"defaultValue": "aveva_pi/streams_recorded"
+			}
+		},
+		"variables": {
+			"vFileName": {
+				"type": "String"
+			},
+			"vFolderTimeString": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/SustainabilityUseCase/AVEVA_PI"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,7 @@
+{
+	"name": "Purview-DataFactory-PE_blob",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/ef36d528-531d-4e40-9231-12300b0cc406/resourceGroups/ingestion-storage-rg-australiaeast-5/providers/Microsoft.Storage/storageAccounts/ingestionaegdsmova",
+		"groupId": "blob"
+	}
+}

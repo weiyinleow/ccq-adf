@@ -1,0 +1,40 @@
+{
+	"name": "DS_SNK_Filesystem_ADSL_Generic_delete",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Landing",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": {
+					"value": "@dataset().ds_param_endPoint",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_endPoint": {
+				"type": "string",
+				"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+			},
+			"ds_param_Path": {
+				"type": "string",
+				"defaultValue": "AEMO_zip"
+			}
+		},
+		"folder": {
+			"name": "2b - Datalake"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().ds_param_Path",
+					"type": "Expression"
+				},
+				"fileSystem": "drop-zone"
+			}
+		}
+	}
+}

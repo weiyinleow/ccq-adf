@@ -1,0 +1,24 @@
+{
+	"name": "LS_SQL_AzureSqlDatabase",
+	"properties": {
+		"parameters": {
+			"ls_param_serverName": {
+				"type": "string",
+				"defaultValue": "cql-dev.database.windows.net"
+			},
+			"ls_param_databaseName": {
+				"type": "string",
+				"defaultValue": "LACIMANP"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName}",
+			"alwaysEncryptedSettings": {
+				"alwaysEncryptedAkvAuthType": "ManagedIdentity"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

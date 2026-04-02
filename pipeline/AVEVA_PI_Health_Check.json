@@ -1,0 +1,215 @@
+{
+	"name": "AVEVA_PI_Health_Check",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Tag Metadata from Unify View",
+				"description": "Get tag metadata from Unify view CTL.VW_AVEVA_PI_TAG_NAME_DATES.\nIncludes StartTime and EndTime which are calculated at run time or overriden.",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Key Vault - Get ADF SVC Acct Username",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT \n TagName\n,TagCategory\n,Descriptor\n,StartTime\n,EndTime\nFROM [CTL].[VW_AVEVA_PI_TAG_NAME_DATES]",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Set variable vFirstTagName",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get Tag Metadata from Unify View",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vFirstTagName",
+					"value": {
+						"value": "@activity('Get Tag Metadata from Unify View').output.value[0].TagName",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "PI Web API - Health Check",
+				"description": "Call /points endpoint for the first TagName as an API health check",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Set variable vFirstTagName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.01:00:00",
+					"retry": 3,
+					"retryIntervalInSeconds": 300,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"disableCertValidation": true,
+					"url": {
+						"value": "@concat(pipeline().globalParameters.param_piwebapi_serverurl,'points?path=',pipeline().globalParameters.param_piwebapi_path,variables('vFirstTagName'))",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "SelfHostedIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"authentication": {
+						"type": "Basic",
+						"username": {
+							"value": "@activity('Key Vault - Get ADF SVC Acct Username').output.value",
+							"type": "Expression"
+						},
+						"password": {
+							"type": "AzureKeyVaultSecret",
+							"store": {
+								"referenceName": "LS_AKV_AA_KV01",
+								"type": "LinkedServiceReference"
+							},
+							"secretName": "cleanco-datahub-serviceaccount-password"
+						}
+					}
+				}
+			},
+			{
+				"name": "Key Vault - Get ADF SVC Acct Username",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "@concat(pipeline().globalParameters.param_keyvault_secrets_endpoint,pipeline().parameters.param_secretname,'?api-version=7.0')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			},
+			{
+				"name": "Set variable vHealthCheckTagName",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "PI Web API - Health Check",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vHealthCheckTagName",
+					"value": {
+						"value": "@activity('PI Web API - Health Check').output.Name",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "If Condition - API Health Check",
+				"description": "Check if vFirstTagName equals vHealthCheckTagName. If true, proceed further with the pipeline, else fail as it is assumed the API is not in a healthy state.",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Set variable vHealthCheckTagName",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(variables('vFirstTagName'), variables('vHealthCheckTagName'))",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Fail - API Unhealthy",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "API Unhealthy",
+								"errorCode": "500"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"param_secretname": {
+				"type": "string",
+				"defaultValue": "cleanco-datahub-serviceaccount-username"
+			}
+		},
+		"variables": {
+			"vFirstTagName": {
+				"type": "String"
+			},
+			"vHealthCheckTagName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/SustainabilityUseCase/AVEVA_PI"
+		},
+		"annotations": []
+	}
+}

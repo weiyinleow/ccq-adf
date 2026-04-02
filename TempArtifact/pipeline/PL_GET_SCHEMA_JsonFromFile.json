@@ -1,0 +1,123 @@
+{
+	"name": "PL_GET_SCHEMA_JsonFromFile",
+	"properties": {
+		"activities": [
+			{
+				"name": "setSchemaDefinition",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "getSchemaFromFile",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[CTL].[USP_SET_INGESTION_SCHEMA_DEFINITION_JSON]",
+					"storedProcedureParameters": {
+						"connectionId": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_connectionId",
+								"type": "Expression"
+							},
+							"type": "Int32"
+						},
+						"ingestionSchemaName": {
+							"value": {
+								"value": "@pipeline().parameters.pl_param_schemaName",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"json": {
+							"value": {
+								"value": "@string(activity('getSchemaFromFile').output.value)",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ELTFrameworkDB",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "getSchemaFromFile",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DS_CFG_ADLS_GenericCsvConfigFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_ConfigFilePath": {
+								"value": "@pipeline().parameters.pl_param_path",
+								"type": "Expression"
+							},
+							"ds_param_ConfigFileName": {
+								"value": "@pipeline().parameters.pl_param_file",
+								"type": "Expression"
+							},
+							"ds_param_EndPoint": "https://vndatapltfv2devst01.blob.core.windows.net"
+						}
+					},
+					"firstRowOnly": false
+				}
+			}
+		],
+		"parameters": {
+			"pl_param_connectionId": {
+				"type": "int",
+				"defaultValue": 21
+			},
+			"pl_param_schemaName": {
+				"type": "string",
+				"defaultValue": "Demo Metering Schema"
+			},
+			"pl_param_path": {
+				"type": "string",
+				"defaultValue": "sources/demo/telemetry/"
+			},
+			"pl_param_file": {
+				"type": "string",
+				"defaultValue": "telemetaryDemoSchema.csv"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/Utility/Schema Utilities"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:19Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

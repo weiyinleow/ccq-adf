@@ -1,0 +1,64 @@
+{
+	"name": "DS_SRC_SQL_GenericTable",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_OnPremiseSources",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_serverName": {
+					"value": "@dataset().ls_param_serverName",
+					"type": "Expression"
+				},
+				"ls_param_databaseName": {
+					"value": "@dataset().ls_param_databaseName",
+					"type": "Expression"
+				},
+				"ls_param_username": {
+					"value": "@dataset().ls_param_username",
+					"type": "Expression"
+				},
+				"ls_param_password_keyvault_secret": {
+					"value": "@dataset().ls_param_password_keyvault_secret",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_tableSchema": {
+				"type": "string"
+			},
+			"ds_param_tableName": {
+				"type": "string"
+			},
+			"ls_param_serverName": {
+				"type": "string"
+			},
+			"ls_param_databaseName": {
+				"type": "string"
+			},
+			"ls_param_username": {
+				"type": "string"
+			},
+			"ls_param_password_keyvault_secret": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "1 - Databases"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().ds_param_tableSchema",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().ds_param_tableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,32 @@
+{
+	"name": "LS_ADB_JobCluster01",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDatabricks",
+		"typeProperties": {
+			"domain": "https://adb-6955339884354075.15.azuredatabricks.net",
+			"accessToken": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AKV_AA_KV01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "access-token-mmg-aa-dbk01"
+			},
+			"newClusterNodeType": "Standard_DS3_v2",
+			"newClusterNumOfWorker": "2:10",
+			"newClusterSparkConf": {
+				"spark.databricks.session.share": "true"
+			},
+			"newClusterSparkEnvVars": {
+				"PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+			},
+			"newClusterVersion": "7.1.x-scala2.12",
+			"newClusterInitScripts": [],
+			"newClusterDriverNodeType": "Standard_DS4_v2",
+			"clusterOption": "Fixed"
+		},
+		"description": "Not in Use"
+	}
+}

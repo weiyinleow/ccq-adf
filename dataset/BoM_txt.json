@@ -1,0 +1,37 @@
+{
+	"name": "BoM_txt",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Landing",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": {
+					"value": "@dataset().ds_param_endpoint",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_endpoint": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "1 - Files"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "bom/historical_data",
+				"fileSystem": "landing"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}

@@ -1,0 +1,32 @@
+{
+	"name": "DEMO_INGEST_AdventureWorksToDataLake",
+	"properties": {
+		"activities": [
+			{
+				"name": "PL_INGEST_MAIN",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_MAIN",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_loadToken": "AdventureWorks_SalesLT_ADLS"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "1 - Orchestration"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-11-09T05:16:22Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

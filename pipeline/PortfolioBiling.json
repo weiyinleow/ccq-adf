@@ -1,0 +1,501 @@
+{
+	"name": "PortfolioBiling",
+	"properties": {
+		"activities": [
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_BILLING_GROUP_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "portfolio_billing_bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "DS_SRC_ABLB_CSV_PortfolioBillingGroup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "portfolio_billing_bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_PL_INGEST_MAIN",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "DS_SRC_ABLB_CSV_PortfolioBillingGroup",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_BILLING_GROUP_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_PortfolioBillingGroupBronze",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Delete File in Raw",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_BILLING_GROUP_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Delete File in Raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_BILLING_GROUP_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "DS_SRC_ABLB_CSV_PortfolioBillingGroup",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "FlattenHierarchy"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_ABLB_DropZone_GenericCsvFIle",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().parameters.I_endPoint",
+								"type": "Expression"
+							},
+							"ds_param_container": "drop-zone",
+							"ds_param_folder": "portfolio_billing_group_SourceCopy",
+							"ds_param_fileName": {
+								"value": "@{pipeline().parameters.p_fileName}.csv",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.p_folder",
+								"type": "Expression"
+							},
+							"ds_param_fileName": {
+								"value": "@{pipeline().parameters.p_fileName}.parquet",
+								"type": "Expression"
+							},
+							"ds_param_fileSystem": {
+								"value": "@pipeline().parameters.p_fileSystem",
+								"type": "Expression"
+							},
+							"ds_param_endPoint": "@pipeline().parameters.p_endPoint"
+						}
+					}
+				]
+			},
+			{
+				"name": "Raw to Archive",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Set variable FolderTimeString",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": false,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": "@pipeline().parameters.p_folder",
+							"ds_param_fileName": {
+								"value": "@{pipeline().parameters.p_fileName}.parquet",
+								"type": "Expression"
+							},
+							"ds_param_fileSystem": "@pipeline().parameters.p_fileSystem",
+							"ds_param_endPoint": "@pipeline().parameters.p_endPoint"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@concat(pipeline().parameters.p_folder,variables('vFolderTimeString'))",
+								"type": "Expression"
+							},
+							"ds_param_fileName": {
+								"value": "@{pipeline().parameters.p_fileName}.zip",
+								"type": "Expression"
+							},
+							"ds_param_fileSystem": "archive",
+							"ds_param_endPoint": {
+								"value": "@pipeline().parameters.I_endPoint",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Delete File in Raw",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "Raw to Archive",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_SNK_ADLS_GenericParquetFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.p_folder",
+								"type": "Expression"
+							},
+							"ds_param_fileName": "@{pipeline().parameters.p_fileName}.parquet",
+							"ds_param_fileSystem": "@pipeline().parameters.p_fileSystem",
+							"ds_param_endPoint": "@pipeline().parameters.p_endPoint"
+						}
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": false,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Set variable FolderTimeString",
+				"description": "Creates a folder path based on UTC time to be shared by all files being archived.",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "portfolio_billing_bronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vFolderTimeString",
+					"value": {
+						"value": "@concat(\nformatDateTime(utcNow(),'yyyy'),'/',\nformatDateTime(utcNow(),'MM'),'/',\nformatDateTime(utcNow(),'dd'),'/',\nformatDateTime(utcNow(),'hh'),'/',\nformatDateTime(utcNow(),'mm'),'/',\nformatDateTime(utcNow(),'ss'),'/'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_PortfolioBilling_Bronze",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "portfolio_billing_bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_BILLING_GROUP_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"p_folder": {
+				"type": "string",
+				"defaultValue": "portfolio_billing_group/nmi_billing_config/"
+			},
+			"p_fileName": {
+				"type": "string",
+				"defaultValue": "nmi_billing_config"
+			},
+			"p_fileSystem": {
+				"type": "string",
+				"defaultValue": "raw"
+			},
+			"p_endPoint": {
+				"type": "string",
+				"defaultValue": "https://cqldevdatahubsynapse.dfs.core.windows.net"
+			},
+			"I_endPoint": {
+				"type": "string",
+				"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+			}
+		},
+		"variables": {
+			"vFolderTimeString": {
+				"type": "String"
+			},
+			"vFileName": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}

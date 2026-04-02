@@ -1,0 +1,53 @@
+{
+	"name": "DS_ABLB_DropZone_GenericXmlFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ABLB_Generic",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": {
+					"value": "@dataset().ds_param_endPoint",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_container": {
+				"type": "string",
+				"defaultValue": "drop-zone"
+			},
+			"ds_param_folder": {
+				"type": "string"
+			},
+			"ds_param_fileName": {
+				"type": "string"
+			},
+			"ds_param_endPoint": {
+				"type": "string",
+				"defaultValue": "https://vndatapltfv2devst01.blob.core.windows.net"
+			}
+		},
+		"folder": {
+			"name": "1 - Files"
+		},
+		"annotations": [],
+		"type": "Xml",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().ds_param_fileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().ds_param_folder",
+					"type": "Expression"
+				},
+				"container": {
+					"value": "@dataset().ds_param_container",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

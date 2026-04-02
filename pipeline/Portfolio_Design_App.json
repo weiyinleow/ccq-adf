@@ -1,0 +1,1318 @@
+{
+	"name": "Portfolio_Design_App",
+	"properties": {
+		"activities": [
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": {
+							"value": "PORTFOLIO_DESIGN_APP",
+							"type": "Expression"
+						},
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Portfolio_Design_App_Retail",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Retail_default",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Extra_default",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Portfolio_default",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "Portfolio_Design_App_Retail",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"min_time": {
+							"value": {
+								"value": "@pipeline().parameters.min_time",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"max_time": {
+							"value": {
+								"value": "@pipeline().parameters.max_time",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"sim_number": {
+							"value": {
+								"value": "@pipeline().parameters.sim_number",
+								"type": "Expression"
+							},
+							"type": "int"
+						},
+						"pipeline_id": {
+							"value": {
+								"value": "@pipeline().RunId",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"pipeline_time": {
+							"value": {
+								"value": "@variables('pipeline_time')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"user": {
+							"value": {
+								"value": "@pipeline().parameters.user",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"usecase": {
+							"value": {
+								"value": "@pipeline().parameters.usecase",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"portfolio_use_def": {
+							"value": "False",
+							"type": "string"
+						},
+						"retail_use_def": {
+							"value": "False",
+							"type": "string"
+						},
+						"external_use_def": {
+							"value": "False",
+							"type": "string"
+						},
+						"portfolio_filename": {
+							"value": {
+								"value": "@variables('portfolio_filename')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"retail_filename": {
+							"value": {
+								"value": "@variables('retail_filename')",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"external_filename": {
+							"value": {
+								"value": "@variables('external_filename')",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool03",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Large"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Delete File in Raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_BILLING_GROUP_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_PORTFOLIO_DESIGN_APP",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Delete File in Raw",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Raw to Archive",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "ArchiveFolderPath",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": false,
+							"wildcardFileName": "*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ""
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericCsvFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							},
+							"ds_param_folder": {
+								"value": "@variables('SourceFolderPath')",
+								"type": "Expression"
+							},
+							"ds_param_fileSystem": "portfolio-design"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericCsvFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							},
+							"ds_param_folder": {
+								"value": "@variables('ArchiveFolderPath')",
+								"type": "Expression"
+							},
+							"ds_param_fileSystem": "archive"
+						}
+					}
+				]
+			},
+			{
+				"name": "Delete File in Raw",
+				"type": "Delete",
+				"dependsOn": [
+					{
+						"activity": "Raw to Archive",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_SNK_ADLS_GenericCsvFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							},
+							"ds_param_folder": "@variables('SourceFolderPath')",
+							"ds_param_fileSystem": "portfolio-design"
+						}
+					},
+					"enableLogging": false,
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					}
+				}
+			},
+			{
+				"name": "Set variable FolderTimeString",
+				"description": "Creates a folder path based on UTC time to be shared by all files being archived.",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Portfolio_Design_App_Retail",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vFolderTimeString",
+					"value": {
+						"value": "@concat(\nformatDateTime(utcNow(),'yyyy'),'/',\nformatDateTime(utcNow(),'MM'),'/',\nformatDateTime(utcNow(),'dd'),'/',\nformatDateTime(utcNow(),'hh'),'/',\nformatDateTime(utcNow(),'mm'),'/',\nformatDateTime(utcNow(),'ss'),'/'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "SourceFolderPath",
+				"description": "Creates a folder path based on UTC time to be shared by all files being archived.",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "CP_SharePoint_PD",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "SourceFolderPath",
+					"value": {
+						"value": "@concat(\n  'pd-app/',\n  replace(pipeline().parameters.usecase, ' ', '_'), '/',\n  replace(pipeline().parameters.user, ' ', '_'), '/',\n  variables('pipeline_time')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ArchiveFolderPath",
+				"description": "Creates a folder path based on UTC time to be shared by all files being archived.",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Set variable FolderTimeString",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ArchiveFolderPath",
+					"value": {
+						"value": "@concat(\n  'portfolio-design/pd-app/',\n  replace(pipeline().parameters.usecase, ' ', '_'), '/',\n  replace(pipeline().parameters.user, ' ', '_'), '/',\n  variables('vFolderTimeString')\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Retail_default",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "SourceFolderPath",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.retail_use_def, 'True')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Retail_default_file",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": false,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "FlattenHierarchy"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ""
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_GenericCsvFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"ds_param_folder": {
+											"value": "pd-app/Retail/Input_Default/",
+											"type": "Expression"
+										},
+										"ds_param_fileName": "Retail_Shape_Input_File.csv",
+										"ds_param_fileSystem": "portfolio-design"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_GenericCsvFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"ds_param_folder": "@variables('SourceFolderPath')",
+										"ds_param_fileName": "Retail_Shape_Input_File.csv",
+										"ds_param_fileSystem": "portfolio-design"
+									}
+								}
+							]
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_Retail_default_file",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Retail_default_file",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Extra_default",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "SourceFolderPath",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.external_use_def, 'True')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Externl_default_file",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": false,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "FlattenHierarchy"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ""
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_GenericCsvFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"ds_param_folder": {
+											"value": "pd-app/Retail/Input_Default/",
+											"type": "Expression"
+										},
+										"ds_param_fileName": "external_info.csv",
+										"ds_param_fileSystem": "portfolio-design"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_GenericCsvFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"ds_param_folder": {
+											"value": "@variables('SourceFolderPath')",
+											"type": "Expression"
+										},
+										"ds_param_fileName": "external_info.csv",
+										"ds_param_fileSystem": "portfolio-design"
+									}
+								}
+							]
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_Externl_default_file",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Externl_default_file",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Portfolio_default",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "SourceFolderPath",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(pipeline().parameters.portfolio_use_def, 'True')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Portfolio_default_file",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": false,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "FlattenHierarchy"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ""
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_GenericCsvFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"ds_param_folder": {
+											"value": "pd-app/Retail/Input_Default/",
+											"type": "Expression"
+										},
+										"ds_param_fileName": "Portfolio_Assets_Setting.csv",
+										"ds_param_fileSystem": "portfolio-design"
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_GenericCsvFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": "@pipeline().globalParameters.param_blb_storage_endpoint",
+										"ds_param_folder": {
+											"value": "@variables('SourceFolderPath')",
+											"type": "Expression"
+										},
+										"ds_param_fileName": "Portfolio_Assets_Setting.csv",
+										"ds_param_fileSystem": "portfolio-design"
+									}
+								}
+							]
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_Portfolio_default_file",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Portfolio_default_file",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "CP_SharePoint_PD",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PipeLineTime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Portfolio_Design_SharePoint_Files_Ingest",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_user_name": {
+							"value": "@pipeline().parameters.user",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+							"type": "Expression"
+						},
+						"run_time_id": {
+							"value": "@variables('pipeline_time')",
+							"type": "Expression"
+						},
+						"usecase": {
+							"value": "@pipeline().parameters.usecase",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "PipeLineTime",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "pipeline_time",
+					"value": {
+						"value": "@replace(replace(replace(pipeline().TriggerTime, ':', '-'), ' ', '_'), 'T', 'T')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Raw_Archive",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Raw to Archive",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_ArchiveFolderPath",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ArchiveFolderPath",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_FolderTimeString",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Set variable FolderTimeString",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Portfolio_Design_App_Retail",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Portfolio_Design_App_Retail",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Portfolio_default",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Portfolio_default",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Extra_default",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Extra_default",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Retail_default",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Retail_default",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SourceFolderPath",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "SourceFolderPath",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_CP_SharePoint_PD",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CP_SharePoint_PD",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_PipeLineTime",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PipeLineTime",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "PORTFOLIO_Design_App_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"min_time": {
+				"type": "string"
+			},
+			"max_time": {
+				"type": "string"
+			},
+			"sim_number": {
+				"type": "int"
+			},
+			"user": {
+				"type": "string"
+			},
+			"usecase": {
+				"type": "string"
+			},
+			"portfolio_use_def": {
+				"type": "string"
+			},
+			"retail_use_def": {
+				"type": "string"
+			},
+			"external_use_def": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"vFolderTimeString": {
+				"type": "String"
+			},
+			"SourceFolderPath": {
+				"type": "String"
+			},
+			"ArchiveFolderPath": {
+				"type": "String"
+			},
+			"pipeline_id": {
+				"type": "String"
+			},
+			"pipeline_time": {
+				"type": "String"
+			},
+			"portfolio_filename": {
+				"type": "String",
+				"defaultValue": "Portfolio_Assets_Setting.csv"
+			},
+			"retail_filename": {
+				"type": "String",
+				"defaultValue": "Retail_Shape_Input_File.csv"
+			},
+			"external_filename": {
+				"type": "String",
+				"defaultValue": "External_Info.csv"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/PortfolioDesign"
+		},
+		"annotations": []
+	}
+}

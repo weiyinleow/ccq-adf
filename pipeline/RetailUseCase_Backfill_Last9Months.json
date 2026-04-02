@@ -1,0 +1,80 @@
+{
+	"name": "RetailUseCase_Backfill_Last9Months",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach_BackfillMonths",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set_Month_List",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('varMonths')",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Execute_RetailUseCase",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "RetailUseCase",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"mpl_param_archive_Path": {
+										"value": "@item()",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set_Month_List",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "varMonths",
+					"value": {
+						"value": "@createArray(\n    toLower(formatDateTime(addToTime(utcNow(), -1, 'Month'), 'yyyy/MM-MMM')),\n    toLower(formatDateTime(addToTime(utcNow(), -2, 'Month'), 'yyyy/MM-MMM')),\n    toLower(formatDateTime(addToTime(utcNow(), -3, 'Month'), 'yyyy/MM-MMM')),\n    toLower(formatDateTime(addToTime(utcNow(), -4, 'Month'), 'yyyy/MM-MMM')),\n    toLower(formatDateTime(addToTime(utcNow(), -5, 'Month'), 'yyyy/MM-MMM')),\n    toLower(formatDateTime(addToTime(utcNow(), -6, 'Month'), 'yyyy/MM-MMM')),\n    toLower(formatDateTime(addToTime(utcNow(), -7, 'Month'), 'yyyy/MM-MMM')),\n    toLower(formatDateTime(addToTime(utcNow(), -8, 'Month'), 'yyyy/MM-MMM')),\n    toLower(formatDateTime(addToTime(utcNow(), -9, 'Month'), 'yyyy/MM-MMM'))\n)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"varMonths": {
+				"type": "Array"
+			},
+			"varDebug": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/RetailUseCase"
+		},
+		"annotations": []
+	}
+}

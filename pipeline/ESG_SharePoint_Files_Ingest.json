@@ -1,0 +1,685 @@
+{
+	"name": "ESG_SharePoint_Files_Ingest",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get_ESG_SHAREPOINT_FILE_DETAILS",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Get_SP_Bearer_Token",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT [SP_SOURCE_ID]\n      ,[SP_FOLDER_PATH]\n      ,[SP_FILE_NAME]\n      ,[FILE_TYPE]\n      ,[RELATIVE_URL_ENDPOINT]\n      ,[TARGET_ROOT_FOLDER]\n      ,[TARGET_FOLDER_PATH]\n      ,[TARGET_FILE_NAME]\n      ,[ORDER]\n      ,[ENABLED]\n  FROM [CTL].[ESG_SHAREPOINT_FILE_DETAILS]\n  WHERE [ENABLED] = 1",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_CFG_SQL_DeltaValuesTable",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Get_SP_Bearer_Token",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "KV - Get ADF SharePoint ClientID",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "KV - Get ADF SharePoint Secret",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "KV - Get ADF SharePoint TenantID",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/x-www-form-urlencoded"
+					},
+					"url": "https://accounts.accesscontrol.windows.net/22a3df9b-ba07-4cf7-97c5-5dd4ff48c62f/tokens/OAuth/2",
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"body": {
+						"value": "@concat(\n  'grant_type=client_credentials',\n  '&client_id=', activity('KV - Get ADF SharePoint ClientID').output.value,'@', activity('KV - Get ADF SharePoint TenantID').output.value,\n  '&client_secret=', activity('KV - Get ADF SharePoint Secret').output.value,\n  '&resource=00000003-0000-0ff1-ce00-000000000000/cleancoqueensland.sharepoint.com@',\n     activity('KV - Get ADF SharePoint TenantID').output.value\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach_RelativeURL",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get_ESG_SHAREPOINT_FILE_DETAILS",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get_ESG_SHAREPOINT_FILE_DETAILS').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 20,
+					"activities": [
+						{
+							"name": "Switch_ON_FILETYPE",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@item()['FILE_TYPE']",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "CSV",
+										"activities": [
+											{
+												"name": "Copy CSV to ADLS",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "DelimitedTextSource",
+														"storeSettings": {
+															"type": "HttpReadSettings",
+															"requestMethod": "GET",
+															"additionalHeaders": {
+																"value": "@{concat('Authorization: Bearer ', activity('Get_SP_Bearer_Token').output.access_token)}",
+																"type": "Expression"
+															},
+															"requestTimeout": ""
+														},
+														"formatSettings": {
+															"type": "DelimitedTextReadSettings"
+														}
+													},
+													"sink": {
+														"type": "DelimitedTextSink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														},
+														"formatSettings": {
+															"type": "DelimitedTextWriteSettings",
+															"quoteAllText": true,
+															"fileExtension": ".txt"
+														}
+													},
+													"enableStaging": false,
+													"translator": {
+														"type": "TabularTranslator",
+														"typeConversion": true,
+														"typeConversionSettings": {
+															"allowDataTruncation": true,
+															"treatBooleanAsNumber": false
+														}
+													}
+												},
+												"inputs": [
+													{
+														"referenceName": "DS_Sharepoint_CSV_SOURCE_TO_LND",
+														"type": "DatasetReference",
+														"parameters": {
+															"RELATIVE_URL_ENDPOINT": {
+																"value": "@item()['RELATIVE_URL_ENDPOINT']",
+																"type": "Expression"
+															},
+															"param_sharepoint_baseurl": {
+																"value": "@pipeline().globalParameters.param_sharepoint_baseurl",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "DS_SNK_SharePoint_CSV_TO_LND",
+														"type": "DatasetReference",
+														"parameters": {
+															"TARGET_FOLDER_PATH": {
+																"value": "@item()['TARGET_FOLDER_PATH']",
+																"type": "Expression"
+															},
+															"TARGET_FILE_NAME": {
+																"value": "@item()['TARGET_FILE_NAME']",
+																"type": "Expression"
+															},
+															"FILE_PATH": "esg_sharepoint_files",
+															"ds_param_endpoint": {
+																"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+																"type": "Expression"
+															}
+														}
+													}
+												]
+											}
+										]
+									},
+									{
+										"value": "PDF",
+										"activities": [
+											{
+												"name": "Copy PDF to ADLS",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "BinarySource",
+														"storeSettings": {
+															"type": "HttpReadSettings",
+															"requestMethod": "GET",
+															"additionalHeaders": {
+																"value": "@{concat('Authorization: Bearer ', activity('Get_SP_Bearer_Token').output.access_token)}",
+																"type": "Expression"
+															},
+															"requestTimeout": ""
+														},
+														"formatSettings": {
+															"type": "BinaryReadSettings"
+														}
+													},
+													"sink": {
+														"type": "BinarySink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														}
+													},
+													"enableStaging": false
+												},
+												"inputs": [
+													{
+														"referenceName": "DS_Sharepoint_PDF_SOURCE_TO_DZ",
+														"type": "DatasetReference",
+														"parameters": {
+															"RELATIVE_URL_ENDPOINT": "@item()['RELATIVE_URL_ENDPOINT']",
+															"param_sharepoint_baseURL": {
+																"value": "@pipeline().globalParameters.param_sharepoint_baseurl",
+																"type": "Expression"
+															}
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "DS_SNK_SharePoint_PDF_TO_DZ",
+														"type": "DatasetReference",
+														"parameters": {
+															"TARGET_FOLDER_PATH": {
+																"value": "@item()['TARGET_FOLDER_PATH']",
+																"type": "Expression"
+															},
+															"TARGET_FILE_NAME": {
+																"value": "@item()['TARGET_FILE_NAME']",
+																"type": "Expression"
+															},
+															"FILE_PATH": "esg_sharepoint_files",
+															"ds_param_endpoint": "@pipeline().globalParameters.param_blb_storage_endpoint"
+														}
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "KV - Get ADF SharePoint ClientID",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "@concat(pipeline().globalParameters.param_keyvault_secrets_endpoint,pipeline().parameters.param_client_id,'?api-version=7.0')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			},
+			{
+				"name": "KV - Get ADF SharePoint Secret",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "@concat(pipeline().globalParameters.param_keyvault_secrets_endpoint,pipeline().parameters.param_client_secret,'?api-version=7.0')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			},
+			{
+				"name": "KV - Get ADF SharePoint TenantID",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": true,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "@concat(pipeline().globalParameters.param_keyvault_secrets_endpoint,pipeline().parameters.param_tenant_id,'?api-version=7.0')",
+						"type": "Expression"
+					},
+					"connectVia": {
+						"referenceName": "AutoResolveIntegrationRuntime",
+						"type": "IntegrationRuntimeReference"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "https://vault.azure.net"
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_SharePoint_Files_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ForEach_RelativeURL",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_SharePoint_Files_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_KV_SP_ClientID",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "KV - Get ADF SharePoint ClientID",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_SharePoint_Files_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_KV_SP_Secret",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "KV - Get ADF SharePoint Secret",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_SharePoint_Files_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_KV_SP_TenantID",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "KV - Get ADF SharePoint TenantID",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_SharePoint_Files_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_KV_SP_BearerToken",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Get_SP_Bearer_Token",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_SharePoint_Files_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_LKP_ESG_SP_FILE",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Get_ESG_SHAREPOINT_FILE_DETAILS",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_SharePoint_Files_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_FEL_RelativeURL",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ForEach_RelativeURL",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_SharePoint_Files_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"param_client_id": {
+				"type": "string",
+				"defaultValue": "SharePointApplicationID"
+			},
+			"param_tenant_id": {
+				"type": "string",
+				"defaultValue": "cleanco-sharepoint-tenantid"
+			},
+			"param_client_secret": {
+				"type": "string",
+				"defaultValue": "SharePointApplicationKey"
+			}
+		},
+		"variables": {
+			"client_id": {
+				"type": "String"
+			},
+			"tenant_id": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/SustainabilityUseCase/SHAREPOINT_ONLINE_FILES"
+		},
+		"annotations": []
+	}
+}

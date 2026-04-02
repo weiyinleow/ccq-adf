@@ -1,0 +1,84 @@
+{
+	"name": "AEMO_NEMDE_SRC_TO_DZ_AzureBlob",
+	"properties": {
+		"activities": [
+			{
+				"name": "AEMO_NEMDE_FileCopy",
+				"description": "Copy NEMDE Files from AEMO tradingopsfs storage account",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureFileStorageReadSettings",
+							"recursive": true
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_AFS_DropZone_Generic_NEMDE",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_path": {
+								"value": "nemde",
+								"type": "Expression"
+							},
+							"ds_param_archive_path": {
+								"value": "@pipeline().parameters.pl_param_archive_path",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_Filesystem_ADSL_Generic_NEMDE",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							},
+							"ds_param_folder": "drop-zone",
+							"ds_param_archive_path": {
+								"value": "@pipeline().parameters.pl_param_archive_path",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"pl_param_archive_path": {
+				"type": "string",
+				"defaultValue": "20251006"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/AEMONEMDE/SubPipelines"
+		},
+		"annotations": []
+	}
+}

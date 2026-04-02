@@ -1,0 +1,558 @@
+{
+	"name": "ESG_SharePoint_List_Ingest",
+	"properties": {
+		"activities": [
+			{
+				"name": "CopySharePointList_ReferenceData",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_ReferenceData",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "esg_sharepoint_lists/reference_data",
+						"pl_param_fileName": "reference_data.csv"
+					}
+				}
+			},
+			{
+				"name": "CopySharePointList_FuelCard_Facility_Map",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_FuelCard_Facility_Map",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "esg_sharepoint_lists/fuelcard_facility_map",
+						"pl_param_fileName": "fuelcard_facility_map.csv"
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESGSharePointListLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_ReferenceData",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CopySharePointList_ReferenceData",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESGSharePointListLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_FuelCard_Facility_Map",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CopySharePointList_FuelCard_Facility_Map",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESGSharePointListLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "ESG_SharePoint_List_Ingestion",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CopySharePointList_ReferenceData",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "CopySharePointList_FuelCard_Facility_Map",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "CopySharePointList_SF6_Emissions",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "CopySharePointList_Coregas_Supplier_Transactions",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "CopySharePointList_DUID_Connection_Point_Mapping",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_MAIN",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_loadToken": "ESG_SharePoint_Lists_ADLS",
+						"pl_param_pipelineName": "ESG_SHAREPOINT_LIST_INGESTION_PIPELINE"
+					}
+				}
+			},
+			{
+				"name": "esg_sharepoint_bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "ESG_SharePoint_List_Ingestion",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "esg_sharepoint_bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "esg_sharepoint_bronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESGSharePointListLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_esg_sharepoint_bronze",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "esg_sharepoint_bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESGSharePointListLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CopySharePointList_SF6_Emissions",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_SF6_Emissions",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "esg_sharepoint_lists/sf6_emissions",
+						"pl_param_fileName": "sf6_emissions.csv"
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SF6_Emissions",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CopySharePointList_SF6_Emissions",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESGSharePointListLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CopySharePointList_Coregas_Supplier_Transactions",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_Coregas_Supplier_Transactions",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "esg_sharepoint_lists/coregas_supplier_transactions",
+						"pl_param_fileName": "coregas_supplier_transactions.csv"
+					}
+				}
+			},
+			{
+				"name": "CopySharePointList_DUID_Connection_Point_Mapping",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_INGEST_WORKER_SRC_TO_LND_SharePointList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_SharePointListName": {
+							"value": "@pipeline().globalParameters.param_SharePoint_DUID_Connection_Point_Mapping",
+							"type": "Expression"
+						},
+						"pl_param_endPoint": {
+							"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+							"type": "Expression"
+						},
+						"pl_param_folder": "esg_sharepoint_lists/duid_connection_point_mapping",
+						"pl_param_fileName": "duid_connection_point_mapping.csv"
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_Coregas_Supplier_Transactions",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CopySharePointList_Coregas_Supplier_Transactions",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESGSharePointListLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_DUID_Connection_Point_Mapping",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CopySharePointList_DUID_Connection_Point_Mapping",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESGSharePointListLoad",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "2 - DataHubPipelines/SustainabilityUseCase/SHAREPOINT_ONLINE_LISTS"
+		},
+		"annotations": []
+	}
+}

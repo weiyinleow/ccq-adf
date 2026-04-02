@@ -1,0 +1,72 @@
+{
+	"name": "PL_INGEST_WORKER_LND_TO_STORE_AzureBlob",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy XML data AEMO",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"deleteFilesAfterCompletion": true
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_ABLB_DropZone_GenericFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": "AEMO/NEM12_temp",
+							"ds_param_container": "landing",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_ADLS_GenericFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dl_storage_endpoint",
+								"type": "Expression"
+							},
+							"ds_param_folder": "AEMO/NEM12_temp",
+							"ds_param_fileSystem": "raw"
+						}
+					}
+				]
+			}
+		],
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/2 - Landing to Store"
+		},
+		"annotations": []
+	}
+}

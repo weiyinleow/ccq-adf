@@ -1,0 +1,23 @@
+{
+	"name": "DS_SNK_ADLS_GenericParquet_TestFiles",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_DataLake",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "999 - ConnectionTesting_Datasets"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "TestConnection_Files",
+				"fileSystem": "landing"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

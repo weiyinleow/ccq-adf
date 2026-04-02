@@ -1,0 +1,21 @@
+{
+	"name": "LS_AFUNC_DatalakeExtractors",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureFunction",
+		"typeProperties": {
+			"functionAppUrl": "https://vn-datapltfv2-dev-func-extractors.azurewebsites.net",
+			"functionKey": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AKV_AA_KV01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "function-key-vn-datapltfv2-dev-func-extractors"
+			},
+			"authentication": "Anonymous"
+		},
+		"description": "Not in Use"
+	}
+}

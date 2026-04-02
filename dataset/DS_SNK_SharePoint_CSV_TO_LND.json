@@ -1,0 +1,53 @@
+{
+	"name": "DS_SNK_SharePoint_CSV_TO_LND",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Landing",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": {
+					"value": "@dataset().ds_param_endpoint",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"TARGET_FOLDER_PATH": {
+				"type": "string"
+			},
+			"TARGET_FILE_NAME": {
+				"type": "string"
+			},
+			"FILE_PATH": {
+				"type": "string"
+			},
+			"ds_param_endpoint": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "2 - Landing"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().TARGET_FILE_NAME",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(dataset().FILE_PATH, '/', dataset().TARGET_FOLDER_PATH)",
+					"type": "Expression"
+				},
+				"fileSystem": "landing"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}

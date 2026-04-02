@@ -1,0 +1,1763 @@
+{
+	"name": "PL_BOM_Historical_Data",
+	"properties": {
+		"activities": [
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Historical_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CP_Dropzone_To_Landing",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings",
+							"compressionProperties": {
+								"type": "ZipDeflateReadSettings"
+							}
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_ABLB_DropZone_BoM_Zip_Folder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pDropzoneRoot",
+								"type": "Expression"
+							},
+							"ds_param_container": "drop-zone",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_dz_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ABLB_DropZone_GenericFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pLandingRoot",
+								"type": "Expression"
+							},
+							"ds_param_container": "landing",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURECP_Dropzone_To_Landing",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CP_Dropzone_To_Landing",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Historical_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Metadata_Bom_Hist",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "CP_Dropzone_To_Landing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "BoM_txt",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endpoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEachFolders",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Metadata_Bom_Hist",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Metadata_Bom_Hist').output.childItems",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "CP_Landing_To_Raw",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "vFolders",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFolderPath": {
+											"value": "@concat('bom/historical_data/', item().name)",
+											"type": "Expression"
+										},
+										"wildcardFileName": "HD01D_Data_*.txt",
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "MergeFiles"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "hd",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "hd",
+												"type": "String",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Station Number",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "StationNumber",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Bureau of Meteorology - Station Name",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "StationName",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Latitude to four decimal places - in degrees",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Latitude",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Longitude to four decimal places - in degrees",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Longitude",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Height of station above Mean Sea Level(MSL) in m",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "MSL",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": " Year Month Day Hour Minutes in YYYY",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Year",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "MM",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Month",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "DD",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Day",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "HH24",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HH24",
+												"type": "String",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "MI format in Local standard time",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Minute",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Total precipitation in last 10 minutes in mm where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Precip10MinMM",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality Total precipitation in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualTotPrecip",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of total precipitation observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountTotalPrecipitObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Air Temperature in degrees Celsius",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "AirTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of air temperature",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualAirTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Average air temperature in last 10 minutes in degrees Celsius where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "AveAirTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of average air temperature in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualAveAirTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of average air temperature observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountAveAirTemperatureObs",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Highest air temperature in last 10 minutes in degrees Celsius where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HighestAirTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of highest air temperature in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualHighestAirTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of highest air temperature observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountHighestAirTemperatureObser",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Lowest air temperature in last 10 minutes in degrees Celsius where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "LowestAirTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of lowest air temperature in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualityLowestAirTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of lowest air temperature observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountLowestAirTemperatureObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Temperature of soil at 5cm depth in degrees Celsius",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "TemperatureSoil5cmDepthDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of soil temperature at 5cm depth",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualSoilTemperature5cmDepth",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Temperature of soil at 10cm depth in degrees Celsius",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "TemperatureSoil10cmDepthDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of soil temperature at 10cm depth",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualSoilTemperature10cmDepth",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Temperature of soil at 20cm depth in degrees Celsius",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "TemperatureSoil20cmDepthDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of soil temperature at 20cm depth",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualSoilTemperature20cmDepth",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Temperature of soil at 50cm depth in degrees Celsius",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "TemperatureSoil50cmDepthDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of soil temperature at 50cm depth",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualSoilTemperature50cmDepth",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Temperature of soil at 100cm depth in degrees Celsius",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "TemperatureSoil100cmDepthDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of soil temperature at 100cm depth",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualSoilTemperature100cmDepth",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Wet bulb temperature in degrees Celsius",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "WetBulbTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of Wet bulb temperature",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualWetBulbTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Highest wet bulb temperature in last 10 minutes in degrees Celsius where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HighestWetBulbTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of highest wet bulb temperature in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualHighestWetBulbObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of highest wet bulb observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountHighestWetBulbObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Lowest wet bulb temperature in last 10 minutes in degrees Celsius where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "LowestWetBulbTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of lowest wet bulb temperature in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualLowestWetBulbTemp",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of lowest wet bulb observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountLowestWetBulbObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Dew point temperature in degrees Celsius",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "DewPointTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of dew point temperature",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualDewPointTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Highest dew point temperature in last 10 minutes in degrees Celsius where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HighestDewPointTemperatureDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of highest dew point temperature in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualHighestDewPointTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of highest dew point observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountHighestDewPointObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Lowest dew point  temperature in last 10 minutes in degrees Celsius where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "LowestDewPointTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of lowest dew point  temperature in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualityLowestDewPointTemperature",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of lowest dew point observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountLowestDewPointObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Relative humidity in percentage %",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "RelativeHumidityPercentage",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of relative humidity",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualityRelativeHumidity",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Vapour pressure in hPa",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "VapourPressurehPa",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of vapour pressure",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualVapourPressure",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Highest vapour pressure in last 10 minutes in hPa where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HighestVapourPressurehPa",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of highest vapour pressure in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualHighestVapourPressure",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of highest vapour pressure observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountHighestVapourPressureObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Lowest vapour pressure in last 10 minutes in hPa where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "LowestVapourPressurehPa",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of lowest vapour pressure in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualLowestVapourPressure",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of lowest vapour pressure observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountLowestVapourPressureObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Wind (1 minute) speed in km/h",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Wind1minuteSpeed",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Wind (1 minute) speed quality",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Wind1minuteSpeedQuality",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Minimum wind speed (over 1 minute) in km/h",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "MinimumWindOver1minuteSpeed",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Minimum wind speed (over 1 minute) quality",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "MinimumWindOver1minuteSpeedQuality",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Wind (1 minute) direction in degrees true",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Wind1minuteDirectionDegrees",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Wind (1 minute) direction quality",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Wind1minuteDirectionQuality",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Average wind speed in last 10 minutes in km/h where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "AveWindSpeed",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of average wind speed in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualAveWindSpeed",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of average wind speed observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountAveWindSpeedObser",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Highest wind speed in last 10 minutes in km/h where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HighestWindSpeed",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of highest wind speed in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualHighestWindSpeed",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of highest wind speed observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountHighestWindSpeedObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Lowest wind speed in last 10 minutes in km/h where observations count >= 4",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "LowestWindSpeed",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of lowest wind speed in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualLowestWindSpeed",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Count of lowest wind speed observations in last 10 minutes",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CountLowestWindSpeedObserv",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Maximum wind gust (over 1 minute) in km/h",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "MaxWindQustOver1minute",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Maximum wind gust (over 1 minute) quality",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "MaxWindQustOver1minuteQual",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Height of cloud (ceilometer - instantaneous sample 1) in meters",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HeightCloudCeilometerSample1",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of cloud height (ceilometer - instantaneous sample 1)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudHeightCeilometerSample1",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Height of cloud (ceilometer - instantaneous sample 2) in meters",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HeightCloudCeilometerSample2",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of cloud height (ceilometer - instantaneous sample 2)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudHeightCeilometerSample2",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Height of cloud (ceilometer - instantaneous sample 3) in meters",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HeightCloudCeilometerSample3",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of cloud height (ceilometer - instantaneous sample 3)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudHeightCeilometerSample3",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Height of cloud (ceilometer - instantaneous sample 4) in meters",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HeightCloudCeilometerSample4",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of cloud height (ceilometer - instantaneous sample 4)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudHeightCeilometerSample4",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Height of cloud (ceilometer - instantaneous sample 5) in meters",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "HeightCloudCeilometerSample5",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of cloud height (ceilometer - instantaneous sample 5)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudHeightCeilometerSample5",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Cloud amount for layer 1 (30 minute ceilometer mean) in eighths",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CloudAmountLayer130MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of layer 1 cloud amount (30 minute ceilometer mean)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudAmountLayer130MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Cloud height for layer 1 (30 minute ceilometer mean) in meters",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CloudHeightLayer130MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of layer 1 cloud height (30 minute ceilometer mean)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudHeightLayer130MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Cloud amount for layer 2 (30 minute ceilometer mean) in eighths",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CloudAmountLayer230MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of layer 2 cloud amount (30 minute ceilometer mean)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudAmountLayer230MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Cloud height for layer 2 (30 minute ceilometer mean) in meters",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CloudHeightLayer230MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of layer 2 cloud height (30 minute ceilometer mean)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudHeightLayer230MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Cloud amount for layer 3 (30 minute ceilometer mean) in eighths",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CloudAmountLayer330MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of layer 3 cloud amount (30 minute ceilometer mean)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudAmountLayer330MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Cloud height for layer 3 (30 minute ceilometer mean) in meters",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "CloudHeightLayer330MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of layer 3 cloud height (30 minute ceilometer mean)",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualCloudHeightLayer330MinuteCeilometer",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "* Total amount of cloud in eighths",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "TotalAmountCloud",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "* Quality of total cloud amount",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualTotalCloudAmount",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Mean sea level pressure in hPa",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "MeanSeaLevelPressurehPa",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of mean sea level pressure",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualMeanSeaLevelPressure",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Station level pressure in hPa",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "StationLevelPressurehPa",
+												"physicalType": "UTF8"
+											}
+										},
+										{
+											"source": {
+												"name": "Quality of station level pressure",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "QualStationLevelPressure",
+												"physicalType": "UTF8"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "BoM_txt",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endpoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_SNK_ADSL_BOM_OBS_ParquetFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_container": "raw",
+										"ds_param_folder": "bom/historical_data"
+									}
+								}
+							]
+						},
+						{
+							"name": "vFolders",
+							"type": "AppendVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "vFolders",
+								"value": {
+									"value": "@item().name\n",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "NOTIFICATION_ON_FAILURE_CP_Landing_To_Raw",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "CP_Landing_To_Raw",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"pl_param_MartName": "BOM_Historical_Ingest",
+									"pl_param_PipelineRunId": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									},
+									"pl_param_PipeLineName": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_ForEachFolders",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "ForEachFolders",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Historical_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "bom_historical_bronze",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "ForEachFolders",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "bom_historical_bronze",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool03",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Large",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Large",
+					"numExecutors": null
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_BoM_Hist_Bronze",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "CP_Dropzone_To_Archive",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Historical_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "CP_Dropzone_To_Archive",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "bom_historical_bronze",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"deleteFilesAfterCompletion": true
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_ABLB_DropZone_GenericFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pDropzoneRoot",
+								"type": "Expression"
+							},
+							"ds_param_container": "drop-zone",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ABLB_DropZone_GenericFolder",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": {
+								"value": "@pipeline().parameters.pDropzoneRoot",
+								"type": "Expression"
+							},
+							"ds_param_container": "archive",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_BoM_Hist_Bronze_SynapseNoteBook",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "bom_historical_bronze",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "BOM_Historical_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pDatasetName": {
+				"type": "string",
+				"defaultValue": "BomHistoricalData"
+			},
+			"pDropzoneRoot": {
+				"type": "string",
+				"defaultValue": "bom/10_minute_historical_data/"
+			},
+			"pLandingRoot": {
+				"type": "string",
+				"defaultValue": "/bom/historical_data/"
+			}
+		},
+		"variables": {
+			"vFolders": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/BoM"
+		},
+		"annotations": []
+	}
+}

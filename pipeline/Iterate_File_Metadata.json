@@ -1,0 +1,219 @@
+{
+	"name": "Iterate_File_Metadata",
+	"properties": {
+		"description": "Basis for Delta Based File Copy. To port over in the PL_INGEST_WORKER_SRC_TO_LND_AzureBlob pipeline and SAS",
+		"activities": [
+			{
+				"name": "Get List of Files",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_ABLB_DropZone_GenericFile",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_folder": "aemo",
+							"ds_param_fileName": "*.xml",
+							"ds_param_container": "drop-zone",
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							}
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"modifiedDatetimeStart": {
+							"value": "@convertToUtc(variables('varReferenceDateTime'),'AUS Eastern Standard Time')",
+							"type": "Expression"
+						},
+						"modifiedDatetimeEnd": {
+							"value": "@utcnow()",
+							"type": "Expression"
+						},
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "BinaryReadSettings"
+					}
+				}
+			},
+			{
+				"name": "ForEach File",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set List Var",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('varFileMetadata')",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Get Last Modified Date",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": "aemo",
+										"ds_param_fileName": {
+											"value": "@item().name",
+											"type": "Expression"
+										},
+										"ds_param_container": "drop-zone",
+										"ds_param_endPoint": "https://vndatapltfv2devst01.blob.core.windows.net"
+									}
+								},
+								"fieldList": [
+									"lastModified",
+									"itemName"
+								],
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						},
+						{
+							"name": "If FileDate Greater Than Limit",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "Get Last Modified Date",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@greater(\r\n    ticks(activity('Get Last Modified Date').output.lastModified), \r\n    ticks(variables('varReferenceDateTime'))\r\n    )",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "Set File Last Modified Date",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "varReferenceDateTime",
+											"value": {
+												"value": "@activity('Get Last Modified Date').output.lastModified",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "Set File Name",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "Set File Last Modified Date",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "varLatestFileName",
+											"value": {
+												"value": "@activity('Get Last Modified Date').output.itemName",
+												"type": "Expression"
+											}
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set List Var",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get List of Files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "varFileMetadata",
+					"value": {
+						"value": "@activity('Get List of Files').output.childItems",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"varFileMetadata": {
+				"type": "Array"
+			},
+			"varReferenceDateTime": {
+				"type": "String",
+				"defaultValue": "2024-02-23 00:00:00"
+			},
+			"varLatestFileName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+		},
+		"annotations": []
+	}
+}

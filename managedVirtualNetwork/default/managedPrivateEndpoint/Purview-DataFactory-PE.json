@@ -1,0 +1,7 @@
+{
+	"name": "Purview-DataFactory-PE",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/e7a5cadd-075a-4f64-a30b-b83175afd0aa/resourceGroups/CQL-AZUR1-PRODDATAHUB01-RG/providers/Microsoft.Purview/accounts/CQL-PROD-DATAHUB-PURVIEW",
+		"groupId": "account"
+	}
+}

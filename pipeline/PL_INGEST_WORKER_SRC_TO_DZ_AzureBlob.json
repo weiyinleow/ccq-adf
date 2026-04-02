@@ -1,0 +1,92 @@
+{
+	"name": "PL_INGEST_WORKER_SRC_TO_DZ_AzureBlob",
+	"properties": {
+		"activities": [
+			{
+				"name": "AEMO_FileCopy",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "msats/retail/archive/"
+					},
+					{
+						"name": "Destination",
+						"value": "landing//"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureFileStorageReadSettings",
+							"recursive": true,
+							"deleteFilesAfterCompletion": false
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_AFS_DropZone_Generic",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_path": {
+								"value": "@pipeline().globalParameters.param_AEMO_path",
+								"type": "Expression"
+							},
+							"ds_param_archive_path": {
+								"value": "@pipeline().parameters.pl_param_archive_path",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SNK_Filesystem_ADSL_Generic",
+						"type": "DatasetReference",
+						"parameters": {
+							"ds_param_endPoint": {
+								"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+								"type": "Expression"
+							},
+							"ds_param_archive_path": {
+								"value": "@pipeline().parameters.pl_param_archive_path",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"pl_param_archive_path": {
+				"type": "string",
+				"defaultValue": "2023/10-oct/02"
+			}
+		},
+		"folder": {
+			"name": "99 - Framework Components/B - Ingest/1 - Source to Landing"
+		},
+		"annotations": []
+	}
+}

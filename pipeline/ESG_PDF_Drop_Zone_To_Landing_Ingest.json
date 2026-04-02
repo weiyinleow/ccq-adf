@@ -1,0 +1,370 @@
+{
+	"name": "ESG_PDF_Drop_Zone_To_Landing_Ingest",
+	"properties": {
+		"activities": [
+			{
+				"name": "PDF_DZ_To_Landing",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "NOTIFICATION_ON_START",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "PDF_DZ_To_Landing",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"datahub_storage": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_blb_storage_account",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"source_container": {
+							"value": "drop-zone",
+							"type": "string"
+						},
+						"destination_container": {
+							"value": "landing",
+							"type": "string"
+						},
+						"archive_container": {
+							"value": "archive",
+							"type": "string"
+						},
+						"param_key_vault_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_key_vault_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"param_document_ai_endpoint": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_document_ai_endpoint",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"param_document_ai_key_secret_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_document_ai_key_secret_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"param_synapse_key_vault_linked_service_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_synapse_key_vault_linked_service_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						},
+						"param_synapse_sql_linked_service_name": {
+							"value": {
+								"value": "@pipeline().globalParameters.param_synapse_sql_linked_service_name",
+								"type": "Expression"
+							},
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "JobSparkpool02",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Medium",
+					"conf": {
+						"spark.dynamicAllocation.enabled": true
+					},
+					"driverSize": "Medium"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts01",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": {
+							"value": "@pipeline().globalParameters.param_synapse_endpoint",
+							"type": "Expression"
+						},
+						"ls_param_workspace_id": {
+							"value": "@pipeline().globalParameters.param_synapse_workspaceid",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "For Each File",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "PDF_DZ_To_Landing",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@json(json(string(activity('PDF_DZ_To_Landing').output)).status.Output.result.exitValue)",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 20,
+					"activities": [
+						{
+							"name": "Archive File",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.00:10:00",
+								"retry": 3,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": false,
+										"deleteFilesAfterCompletion": false
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_ABLB_DropZone_GenericFile",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_folder": {
+											"value": "@item().destination_file_path",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@item().destination_file_name",
+											"type": "Expression"
+										},
+										"ds_param_container": {
+											"value": "@item().destination_container",
+											"type": "Expression"
+										},
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_SNK_ADLS_GenericFile_zip",
+									"type": "DatasetReference",
+									"parameters": {
+										"ds_param_endPoint": {
+											"value": "@pipeline().globalParameters.param_blb_storage_endpoint",
+											"type": "Expression"
+										},
+										"ds_param_folder": {
+											"value": "@item().archive_file_path",
+											"type": "Expression"
+										},
+										"ds_param_fileName": {
+											"value": "@item().archive_file_name",
+											"type": "Expression"
+										},
+										"ds_param_fileSystem": "archive"
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SYN_DZ_TO_LND",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "PDF_DZ_To_Landing",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Drop_Zone_To_Landing_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_START",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_START",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Drop_Zone_To_Landing_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_FAILURE_SYN_DZ_TO_LND_ARCHIVE",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "For Each File",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_FAIL",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Drop_Zone_To_Landing_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "NOTIFICATION_ON_SUCCESS",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "For Each File",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_TEAMS_NOTIF_ON_SUCCESS",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"pl_param_MartName": "ESG_PDF_Drop_Zone_To_Landing_Ingest",
+						"pl_param_PipelineRunId": {
+							"value": "@pipeline().RunId",
+							"type": "Expression"
+						},
+						"pl_param_PipeLineName": {
+							"value": "@pipeline().Pipeline",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"variables": {
+			"Supplier": {
+				"type": "String"
+			},
+			"FilePath": {
+				"type": "String"
+			},
+			"FileName": {
+				"type": "String"
+			},
+			"source_file_name": {
+				"type": "String"
+			},
+			"notebookOutput": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "2 - DataHubPipelines/SustainabilityUseCase/SHAREPOINT_ONLINE_FILES"
+		},
+		"annotations": []
+	}
+}

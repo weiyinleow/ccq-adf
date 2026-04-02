@@ -1,0 +1,130 @@
+{
+	"name": "DEMO_SparkPool",
+	"properties": {
+		"activities": [
+			{
+				"name": "Synapse Analytics Notebook",
+				"type": "SynapseNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "Notebook 1",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"source_path": {
+							"value": "sanity_check",
+							"type": "string"
+						},
+						"source_file": {
+							"value": "CUSTOMER__full_32a72bd2-bd94-467f-9030-6b9f20dad676_20240204_100201",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "devsparkpool01",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": "https://cql-dev-datahub-synapse01.dev.azuresynapse.net",
+						"ls_param_workspace_id": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+					}
+				}
+			},
+			{
+				"name": "Synapse Analytics Notebook_copy1",
+				"type": "SynapseNotebook",
+				"dependsOn": [
+					{
+						"activity": "Synapse Analytics Notebook",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebook": {
+						"referenceName": {
+							"value": "ReadFromRaw",
+							"type": "Expression"
+						},
+						"type": "NotebookReference"
+					},
+					"parameters": {
+						"source_path": {
+							"value": "sanity_check",
+							"type": "string"
+						},
+						"source_file": {
+							"value": "CUSTOMER__full_32a72bd2-bd94-467f-9030-6b9f20dad676_20240204_100201",
+							"type": "string"
+						}
+					},
+					"snapshot": true,
+					"sparkPool": {
+						"referenceName": {
+							"value": "devsparkpool01",
+							"type": "Expression"
+						},
+						"type": "BigDataPoolReference"
+					},
+					"executorSize": "Small",
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"driverSize": "Small",
+					"numExecutors": null
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_Synapse_Analytics_Artifacts",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"ls_param_endpoint": "https://cql-dev-datahub-synapse01.dev.azuresynapse.net",
+						"ls_param_workspace_id": "/subscriptions/2e9f823e-dc76-4e8e-b815-c8a4f22d05ff/resourceGroups/CQL-AZUR1-DEVDATAHUB01-RG/providers/Microsoft.Synapse/workspaces/cql-dev-datahub-synapse01"
+					}
+				}
+			}
+		],
+		"folder": {
+			"name": "1 - Orchestration"
+		},
+		"annotations": []
+	}
+}

@@ -1,0 +1,40 @@
+{
+	"name": "DS_SRC_ADSL_MSATS_SnapshotXmlFile",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Landing",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": "https://cqldevdatahubdata.dfs.core.windows.net"
+			}
+		},
+		"parameters": {
+			"ds_param_container": {
+				"type": "string",
+				"defaultValue": "drop-zone"
+			},
+			"ds_param_folder": {
+				"type": "string",
+				"defaultValue": "aemo/msats_snapshots/nmimaster"
+			}
+		},
+		"folder": {
+			"name": "1 - Files"
+		},
+		"annotations": [],
+		"type": "Xml",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().ds_param_folder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().ds_param_container",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,47 @@
+{
+	"name": "DS_SNK_Filesystem_ADSL_Generic_destination_NEMDE",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS2_Landing",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ls_param_endpoint": {
+					"value": "@dataset().ds_param_endPoint",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"ds_param_endPoint": {
+				"type": "string",
+				"defaultValue": "https://cqldevdatahubdata.dfs.core.windows.net"
+			},
+			"ds_param_folder": {
+				"type": "string",
+				"defaultValue": "drop-zone"
+			},
+			"ds_param_path": {
+				"type": "string",
+				"defaultValue": "AEMO_NEMDE_SourceCopy"
+			}
+		},
+		"folder": {
+			"name": "2b - Datalake"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().ds_param_path",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().ds_param_folder",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

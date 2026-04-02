@@ -1,0 +1,33 @@
+{
+	"name": "DS_AFS_DropZone_Generic",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_TradingOps_FS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ds_param_path": {
+				"type": "string",
+				"defaultValue": "msats/retail/archive"
+			},
+			"ds_param_archive_path": {
+				"type": "string",
+				"defaultValue": "2023/10-oct/02"
+			}
+		},
+		"folder": {
+			"name": "1 - Files"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureFileStorageLocation",
+				"folderPath": {
+					"value": "@if(equals(dataset().ds_param_archive_path,'yyyy/mm-mmm/dd'),\nconcat(dataset().ds_param_path, '/',formatDateTime(utcnow(), 'yyyy'), '/',formatDateTime(utcnow(),'MM'),'-',toLower(formatDateTime(utcnow(),'MMM')),'/',formatDateTime(utcnow(),'dd')), concat(dataset().ds_param_path, '/',dataset().ds_param_archive_path))",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

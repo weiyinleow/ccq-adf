@@ -1,0 +1,37 @@
+{
+	"name": "LS_SQL_OnPremiseSources",
+	"properties": {
+		"parameters": {
+			"ls_param_serverName": {
+				"type": "string"
+			},
+			"ls_param_databaseName": {
+				"type": "string"
+			},
+			"ls_param_username": {
+				"type": "string"
+			},
+			"ls_param_password_keyvault_secret": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Data Source=@{linkedService().ls_param_serverName};Initial Catalog=@{linkedService().ls_param_databaseName};User ID=@{linkedService().ls_param_username}",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_AKV_AA_KV01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": {
+					"value": "@linkedService().ls_param_password_keyvault_secret",
+					"type": "Expression"
+				}
+			}
+		},
+		"description": "Not in Use"
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}
