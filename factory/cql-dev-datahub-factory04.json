@@ -29,6 +29,10 @@
 			"param_synapse_SQLPoolName": {
 				"type": "string",
 				"value": "cqldevdatahubdsql01"
+			},
+			"param_SharePoint_Name": {
+				"type": "string",
+				"value": "NP_SPM_Name"
 			}
 		}
 	},
